@@ -4,9 +4,10 @@ class Provider::PowensAdapter < Provider::Base
 
   Provider::Factory.register("PowensAccount", self)
 
-  # Sure accountable types that can be created from Powens accounts.
+  # Sure accountable types that can be created from Powens accounts. All of
+  # Sure's types are offered: the user picks the right one at setup time.
   def self.supported_account_types
-    %w[Depository Loan Investment]
+    Accountable::TYPES
   end
 
   # Connection config hashes for each of the family's configured Powens items.

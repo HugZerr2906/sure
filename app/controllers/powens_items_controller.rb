@@ -229,11 +229,10 @@ class PowensItemsController < ApplicationController
     @api_error = fetch_powens_accounts_from_api(@powens_item)
     @powens_accounts = @powens_item.powens_accounts.needs_setup.order(:name)
     @account_type_options = [
-      [ t(".account_types.skip"), "skip" ],
-      [ t(".account_types.depository"), "Depository" ],
-      [ t(".account_types.loan"), "Loan" ],
-      [ t(".account_types.investment"), "Investment" ]
-    ]
+      [ t(".account_types.skip"), "skip" ]
+    ] + Accountable::TYPES.map do |type|
+      [ type.constantize.new.singular_display_name, type ]
+    end
     @powens_account_type_suggestions = @powens_accounts.each_with_object({}) do |powens_account, suggestions|
       suggestions[powens_account.id] = powens_account.suggested_account_type || "skip"
     end
