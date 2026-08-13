@@ -19,6 +19,7 @@ class AccountsController < ApplicationController
     @redbark_items = visible_provider_items(family.redbark_items.ordered.with_attached_logo.includes(:redbark_accounts))
     @akahu_items = visible_provider_items(family.akahu_items.ordered.with_attached_logo.includes(:akahu_accounts))
     @up_items = visible_provider_items(family.up_items.ordered.with_attached_logo.includes(:up_accounts))
+    @powens_items = visible_provider_items(family.powens_items.ordered.with_attached_logo.includes(:powens_accounts))
     @enable_banking_items = visible_provider_items(family.enable_banking_items.ordered.with_attached_logo)
     @coinstats_items = visible_provider_items(family.coinstats_items.ordered.with_attached_logo.includes(:coinstats_accounts, :accounts))
     @mercury_items = visible_provider_items(family.mercury_items.ordered.with_attached_logo.includes(:mercury_accounts))
@@ -306,6 +307,7 @@ class AccountsController < ApplicationController
         @redbark_items,
         @akahu_items,
         @up_items,
+        @powens_items,
         @enable_banking_items,
         @coinstats_items,
         @mercury_items,
