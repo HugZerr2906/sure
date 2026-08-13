@@ -16,7 +16,7 @@ fr:
       account_sync_schedule_failed: Impossible de planifier la synchronisation du compte Powens
       sync_failed: Impossible de synchroniser la connexion Powens
       transactions_failed: Impossible de récupérer les transactions Powens
-      invalid_domain: doit être un hôte biapi.pro (p. ex. my.biapi.pro) sans schéma ni chemin
+      invalid_domain: doit être une URL d'API biapi.pro (p. ex. https://my.biapi.pro/2.0/)
     institution_summary:
       count:
         one: 1 institution
@@ -36,8 +36,8 @@ fr:
       update_connection: Mettre à jour la connexion
       connection_name_label: Nom de la connexion
       connection_name_placeholder: Banque principale
-      domain_label: Domaine API
-      domain_placeholder: p. ex. my.biapi.pro
+      domain_label: Adresse API
+      domain_placeholder: p. ex. https://my.biapi.pro/2.0/
       access_token_label: Jeton d'accès utilisateur
       access_token_placeholder: Collez votre jeton d'accès utilisateur Powens
       keep_access_token_placeholder: Laissez vide pour conserver le jeton existant

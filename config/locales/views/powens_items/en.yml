@@ -16,7 +16,7 @@ en:
       account_sync_schedule_failed: Could not schedule Powens account sync
       transactions_failed: Could not fetch Powens transactions
       sync_failed: Could not sync Powens connection
-      invalid_domain: must be a biapi.pro host (e.g. my.biapi.pro) without scheme or path
+      invalid_domain: must be a biapi.pro API URL (e.g. https://my.biapi.pro/2.0/)
     sync_status:
       no_accounts: No accounts found
       all_synced:
@@ -36,8 +36,8 @@ en:
       update_connection: Update connection
       connection_name_label: Connection name
       connection_name_placeholder: Main bank
-      domain_label: API domain
-      domain_placeholder: e.g. my.biapi.pro
+      domain_label: API URL
+      domain_placeholder: e.g. https://my.biapi.pro/2.0/
       access_token_label: User access token
       access_token_placeholder: Paste your Powens user access token
       keep_access_token_placeholder: Leave blank to keep the existing token
