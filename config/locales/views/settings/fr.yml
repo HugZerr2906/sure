@@ -471,6 +471,7 @@ fr:
         mercury: Synchronisez automatiquement vos comptes professionnels Mercury.
         plaid: Connectez des milliers d'institutions financières américaines via Plaid.
         plaid_eu: Connectez des institutions financières européennes via Plaid (PSD2 / Open Banking).
+        powens: Connectez des institutions financières européennes via Powens (agrégation bancaire).
         questrade: Synchronisez directement vos comptes d'investissement Questrade via l'API Questrade.
         simplefin: Connectez des comptes bancaires américains via le protocole ouvert SimpleFIN.
         snaptrade: Connectez vos comptes de courtage via le réseau d'agrégation SnapTrade.
