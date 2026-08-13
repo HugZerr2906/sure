@@ -41,6 +41,8 @@ fr:
       access_token_label: Jeton d'accès utilisateur
       access_token_placeholder: Collez votre jeton d'accès utilisateur Powens
       keep_access_token_placeholder: Laissez vide pour conserver le jeton existant
+      sync_start_date_label: Date de début d'historique
+      sync_start_date_help: Laissez vide pour importer tout l'historique disponible (varie selon la banque)
       setup_accounts: Configurer les comptes
       syncing: Synchronisation...
       sync: Synchroniser

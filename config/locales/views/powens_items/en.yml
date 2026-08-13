@@ -41,6 +41,8 @@ en:
       access_token_label: User access token
       access_token_placeholder: Paste your Powens user access token
       keep_access_token_placeholder: Leave blank to keep the existing token
+      sync_start_date_label: History start date
+      sync_start_date_help: Leave blank to import all available history (varies by bank)
       setup_accounts: Setup accounts
       syncing: Syncing...
       sync: Sync

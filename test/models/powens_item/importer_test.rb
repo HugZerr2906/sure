@@ -91,6 +91,8 @@ class PowensItem::ImporterTest < ActiveSupport::TestCase
     assert_equal BigDecimal("1234.56").to_s, @powens_account.current_balance.to_s
     assert_equal "checking", @powens_account.account_type
     assert_equal "123", provider.transaction_calls.first[:account_id]
+    # First import requests the full available history, not a 90-day window.
+    assert_equal Date.new(1900, 1, 1), provider.transaction_calls.first[:since]
 
     assert_equal [ 9001 ], @powens_account.raw_transactions_payload.map { |tx| tx["id"] }
   end

@@ -73,6 +73,10 @@
                                   type: :password,
                                   value: nil %>
 
+              <%= form.date_field :sync_start_date,
+                                  label: t("powens_items.provider_panel.sync_start_date_label"),
+                                  label_tooltip: t("powens_items.provider_panel.sync_start_date_help") %>
+
               <div class="flex flex-wrap justify-end gap-2">
                 <%= render DS::Link.new(
                   text: t("powens_items.provider_panel.setup_accounts"),
@@ -120,6 +124,10 @@
                         placeholder: t("powens_items.provider_panel.access_token_placeholder"),
                         type: :password,
                         value: nil %>
+
+    <%= form.date_field :sync_start_date,
+                        label: t("powens_items.provider_panel.sync_start_date_label"),
+                        label_tooltip: t("powens_items.provider_panel.sync_start_date_help") %>
 
     <div class="flex justify-end">
       <%= render DS::Button.new(

@@ -191,7 +191,10 @@ class PowensItem::Importer
     end
 
     # Resolve the date from which to fetch transactions for +powens_account+,
-    # preferring explicit per-account/item start dates, then a recent window.
+    # preferring explicit per-account/item start dates, then a recent window for
+    # incremental syncs. On the very first import (no stored transactions yet)
+    # request the full available history: Powens guarantees at least 3 months
+    # and often exposes several years (see first_date in list responses).
     def determine_sync_start_date(powens_account)
       return powens_account.sync_start_date if powens_account.sync_start_date.present?
       return powens_item.sync_start_date if powens_item.sync_start_date.present?
@@ -200,9 +203,13 @@ class PowensItem::Importer
       if has_stored_transactions && powens_item.last_synced_at
         powens_item.last_synced_at - 7.days
       else
-        90.days.ago
+        FULL_HISTORY_START
       end
     end
+
+    # Far-past date used as an explicit min_date on the first import so Powens
+    # returns every transaction it holds (down to the connector's first_date).
+    FULL_HISTORY_START = Date.new(1900, 1, 1).freeze
 
     # Record a provider sync error as a DebugLogEntry with structured metadata.
     def capture_sync_error(message, error, powens_account: nil, error_type: nil)
