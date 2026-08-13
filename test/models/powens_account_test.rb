@@ -60,6 +60,28 @@ class PowensAccountTest < ActiveSupport::TestCase
     assert_equal "my.biapi.pro", account.institution_metadata["domain"]
   end
 
+  test "accepts the account type as a plain string (real API shape)" do
+    account = PowensAccount.create!(
+      powens_item: @powens_item,
+      name: "Initial",
+      account_id: "4",
+      currency: "EUR"
+    )
+
+    account.upsert_powens_snapshot!(
+      id: 4,
+      original_name: "Compte Courant",
+      balance: 4419.48,
+      currency: { iso_code: "EUR" },
+      type: "checking"
+    )
+
+    account.reload
+    assert_equal "checking", account.account_type
+    assert_equal "Depository", account.suggested_account_type
+    assert_equal "checking", account.suggested_subtype
+  end
+
   private
 
     def build_account(account_type:)

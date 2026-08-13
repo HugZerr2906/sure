@@ -77,7 +77,6 @@ class PowensAccount < ApplicationRecord
   def upsert_powens_snapshot!(account_snapshot)
     snapshot = account_snapshot.with_indifferent_access
     currency = snapshot[:currency].is_a?(Hash) ? snapshot[:currency].with_indifferent_access : {}
-    type = snapshot[:type].is_a?(Hash) ? snapshot[:type].with_indifferent_access : {}
 
     assign_attributes(
       current_balance: parse_balance(snapshot[:balance]),
@@ -85,7 +84,7 @@ class PowensAccount < ApplicationRecord
       name: snapshot[:original_name].presence || snapshot[:name].presence || I18n.t("powens_account.fallback"),
       account_id: snapshot[:id].to_s,
       account_status: snapshot[:disabled].present? ? "disabled" : "active",
-      account_type: type[:name],
+      account_type: extract_account_type(snapshot),
       ownership_type: snapshot[:usage],
       provider: "powens",
       disabled: snapshot[:disabled].present?,
@@ -106,6 +105,16 @@ class PowensAccount < ApplicationRecord
   end
 
   private
+
+    # Powens returns the account type as a plain string in practice
+    # ("checking", "savings", ...), while the docs describe an AccountType
+    # object ({ id:, name: }). Accept both forms.
+    def extract_account_type(snapshot)
+      value = snapshot[:type]
+      return value.to_s.presence unless value.is_a?(Hash)
+
+      value.with_indifferent_access[:name].to_s.presence
+    end
 
     # Parse a Powens decimal balance into a BigDecimal, defaulting to 0 on bad input.
     def parse_balance(value)
