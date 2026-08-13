@@ -16,6 +16,7 @@ fr:
       account_sync_schedule_failed: Impossible de planifier la synchronisation du compte Powens
       sync_failed: Impossible de synchroniser la connexion Powens
       transactions_failed: Impossible de récupérer les transactions Powens
+      invalid_domain: doit être un hôte biapi.pro (p. ex. my.biapi.pro) sans schéma ni chemin
     institution_summary:
       count:
         one: 1 institution

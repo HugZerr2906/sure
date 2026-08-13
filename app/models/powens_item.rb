@@ -1,6 +1,9 @@
 class PowensItem < ApplicationRecord
   include Syncable, Provided, Unlinking, Encryptable
 
+  # Same host pattern as the API client (biapi.pro tenants only).
+  DOMAIN_PATTERN = Provider::Powens::DOMAIN_PATTERN
+
   enum :status, { good: "good", requires_update: "requires_update" }, default: :good
 
   if encryption_ready?
@@ -16,7 +19,10 @@ class PowensItem < ApplicationRecord
 
   validates :name, presence: true
   validates :domain, presence: true, on: :create
+  validates :domain, format: { with: DOMAIN_PATTERN, message: I18n.t("powens_item.errors.invalid_domain") }, allow_blank: true
   validates :access_token, presence: true, on: :create
+
+  before_validation :normalize_domain
 
   scope :active, -> { where(scheduled_for_deletion: false) }
   scope :syncable, -> { active }
@@ -183,7 +189,28 @@ class PowensItem < ApplicationRecord
     domain.present? && access_token.present?
   end
 
+  # Accept both bare hosts ("my.biapi.pro") and full API URLs
+  # ("https://my.biapi.pro/2.0/") as written in the Powens docs, then store
+  # only the host. Keeps the domain field forgiving for manual entry.
+  def self.normalize_domain(value)
+    raw = value.to_s.strip
+    return raw if raw.blank?
+
+    if raw.start_with?("http://", "https://")
+      uri = URI.parse(raw)
+      return uri.host.to_s.strip if uri.host.present?
+    end
+
+    raw.split("/").first.to_s.strip
+  rescue URI::InvalidURIError
+    raw.split("/").first.to_s.strip
+  end
+
   private
+
+    def normalize_domain
+      self.domain = self.class.normalize_domain(domain) if domain.present?
+    end
 
     # Single query for all three account counts, reused across sync_status_summary
     # and the settings partial to avoid 3+ separate COUNT queries per rendered item.

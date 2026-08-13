@@ -16,6 +16,7 @@ en:
       account_sync_schedule_failed: Could not schedule Powens account sync
       transactions_failed: Could not fetch Powens transactions
       sync_failed: Could not sync Powens connection
+      invalid_domain: must be a biapi.pro host (e.g. my.biapi.pro) without scheme or path
     sync_status:
       no_accounts: No accounts found
       all_synced:
