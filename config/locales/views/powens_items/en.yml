@@ -1,0 +1,122 @@
+---
+en:
+  providers:
+    powens:
+      name: Powens
+      description: Connect European bank accounts via Powens aggregation (manual user token)
+  family:
+    powens:
+      create_powens_item:
+        default_name: Powens Connection
+  powens_account:
+    fallback: Powens account
+  powens_item:
+    errors:
+      account_processing_failed: Could not sync Powens account
+      account_sync_schedule_failed: Could not schedule Powens account sync
+      transactions_failed: Could not fetch Powens transactions
+      sync_failed: Could not sync Powens connection
+    sync_status:
+      no_accounts: No accounts found
+      all_synced:
+        one: 1 account synced
+        other: "%{count} accounts synced"
+      partial: "%{linked} synced, %{unlinked} need setup"
+    institution_summary:
+      none: No institutions connected
+      one: 1 institution
+      count:
+        one: 1 institution
+        other: "%{count} institutions"
+  powens_items:
+    provider_panel:
+      default_connection_name: Powens Connection
+      add_connection: Add Powens connection
+      update_connection: Update connection
+      connection_name_label: Connection name
+      connection_name_placeholder: Main bank
+      domain_label: API domain
+      domain_placeholder: e.g. my.biapi.pro
+      access_token_label: User access token
+      access_token_placeholder: Paste your Powens user access token
+      keep_access_token_placeholder: Leave blank to keep the existing token
+      setup_accounts: Setup accounts
+      syncing: Syncing...
+      sync: Sync
+      disconnect: Disconnect
+      disconnect_confirm: "Are you sure you want to disconnect %{name}?"
+    create:
+      success: Powens connection saved.
+    update:
+      success: Powens connection updated.
+    destroy:
+      success: Scheduled Powens connection for deletion.
+      unlink_failed: Could not disconnect Powens connection
+    select_accounts:
+      title: Link Powens accounts
+      description: Choose the Powens accounts to add.
+      no_accounts_found: No unlinked Powens accounts were found.
+      no_credentials_configured: Configure Powens in provider settings first.
+      disabled_badge: disabled on Powens - will be activated on link
+      cancel: Cancel
+      link_accounts: Link accounts
+    link_accounts:
+      success:
+        one: Linked 1 Powens account.
+        other: "Linked %{count} Powens accounts."
+      no_accounts_selected: Select at least one account.
+      no_credentials_configured: Configure Powens in provider settings first.
+      unsupported_account_type: Powens does not support that account type.
+      link_failed: No accounts were linked.
+    select_existing_account:
+      title: "Link Powens account to %{account_name}"
+      description: Choose an unlinked Powens account to connect to this account.
+      no_accounts_found: No unlinked Powens accounts were found.
+      no_credentials_configured: Configure Powens in provider settings first.
+      disabled_badge: disabled on Powens - will be activated on link
+      account_already_linked: This account is already linked to a provider.
+      cancel: Cancel
+      link_account: Link account
+    link_existing_account:
+      success: "Linked Powens account to %{account_name}."
+      account_already_linked: This account is already linked to a provider.
+      powens_account_already_linked: This Powens account is already linked.
+      no_account_selected: Select a Powens account to link.
+    setup_accounts:
+      title: Link Powens Accounts
+      subtitle: Choose how each Powens account should appear in Sure.
+      no_credentials: Configure Powens credentials first.
+      api_error: Could not fetch Powens accounts.
+      fetch_failed: Could not fetch accounts
+      no_accounts_to_setup: No accounts to set up
+      all_accounts_linked: All Powens accounts are already linked.
+      choose_account_type: Choose an account type
+      choose_account_type_description: Skip accounts you do not want to track.
+      account_type_label: Account type
+      account_types:
+        skip: Skip
+        depository: Cash
+        loan: Loan
+        investment: Investment
+      needs_activation: "(disabled on Powens - will be activated)"
+      create_accounts: Create accounts
+      cancel: Cancel
+    complete_account_setup:
+      success:
+        one: Created 1 Powens account.
+        other: "Created %{count} Powens accounts."
+      all_skipped: No Powens accounts were created.
+      no_accounts: No Powens accounts were selected.
+      creation_failed: Could not create Powens accounts.
+    powens_item:
+      deletion_in_progress: Deletion in progress
+      syncing: Syncing
+      error: Error
+      status_with_summary: "Synced %{timestamp} ago · %{summary}"
+      status_never: Never synced
+      delete: Delete
+      setup_needed: Account setup needed
+      setup_description: "%{linked} of %{total} accounts linked."
+      setup_action: Setup accounts
+      no_accounts_title: No accounts imported yet
+      no_accounts_description: Fetch Powens accounts and choose which ones to link.

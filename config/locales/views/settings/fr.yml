@@ -480,6 +480,10 @@ fr:
         step_1_html: Allez sur %{link} et générez un jeton d'accès personnel.
         step_2: Copiez votre jeton d'accès personnel.
         step_3: Collez le jeton ci-dessous, enregistrez, puis liez vos comptes synchronisés.
+      powens_panel:
+        step_1_html: "Connectez votre banque une fois dans %{link} (webview), puis copiez votre jeton d'accès utilisateur."
+        step_2: Collez votre domaine API (p. ex. my.biapi.pro) et votre jeton d'accès utilisateur ci-dessous.
+        step_3: Enregistrez, synchronisez, puis liez vos comptes dans Sure.
       update:
         no_changes: Aucune modification n'a été apportée
         updated_successfully: Paramètres du fournisseur mis à jour avec succès

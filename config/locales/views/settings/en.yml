@@ -533,6 +533,10 @@ en:
         step_1_html: "Go to %{link} and generate a personal access token."
         step_2: "Copy your personal access token."
         step_3: "Paste the token below, save, then link your synced accounts."
+      powens_panel:
+        step_1_html: "Connect your bank once in the %{link} (webview), then copy your user access token."
+        step_2: "Paste your API domain (e.g. my.biapi.pro) and user access token below."
+        step_3: "Save, sync, then link your accounts in Sure."
       simplefin_panel:
         step_1_html: "Go to %{link} for a one-time setup token."
         step_2: "Paste the token below and connect."
