@@ -105,4 +105,36 @@ class Provider::PowensTest < ActiveSupport::TestCase
       assert_match(/noAccount/, error.message)
     end
   end
+
+  test "generates a temporary code for the connect webview" do
+    requests = []
+
+    Provider::Powens.stub(:get, ->(url, headers:, query: nil) {
+      requests << { url: url, headers: headers, query: query }
+      FakeResponse.new(
+        code: 200,
+        message: "OK",
+        body: { code: "temp-code-123", type: "temporary", access: "single", expires_in: 1800 }.to_json
+      )
+    }) do
+      client = Provider::Powens.new(domain: "my.biapi.pro", access_token: "powens-token")
+
+      assert_equal "temp-code-123", client.get_temporary_code
+    end
+
+    assert_equal 1, requests.size
+    assert_match %r{/auth/token/code}, requests.first[:url]
+    assert_equal "singleAccess", requests.first[:query][:type]
+    assert_equal "Bearer powens-token", requests.first[:headers]["Authorization"]
+  end
+
+  test "returns nil when the temporary code payload is empty" do
+    Provider::Powens.stub(:get, ->(url, headers:, query: nil) {
+      FakeResponse.new(code: 200, message: "OK", body: {}.to_json)
+    }) do
+      client = Provider::Powens.new(domain: "my.biapi.pro", access_token: "powens-token")
+
+      assert_nil client.get_temporary_code
+    end
+  end
 end

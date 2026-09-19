@@ -53,6 +53,14 @@ class Provider::Powens
     post(path, query: "all", body: { disabled: false }.to_json)
   end
 
+  # GET /auth/token/code — generates a short-lived code (30 min) scoped to the
+  # token's user. Hand it to the Connect webview so the user can add another
+  # bank to the same Powens user without a second access token.
+  def get_temporary_code(type: "singleAccess")
+    payload = get("auth/token/code", query: { type: type })
+    payload[:code].presence
+  end
+
   private
 
     RETRYABLE_ERRORS = [

@@ -43,6 +43,16 @@
                 disabled: item.syncing?
               ) %>
               <%= render DS::Button.new(
+                text: t("powens_items.provider_panel.add_bank"),
+                icon: "plus",
+                variant: :outline,
+                size: :sm,
+                href: connect_bank_powens_item_path(item),
+                method: :post,
+                data: { turbo: false },
+                form: { data: { turbo: false } }
+              ) %>
+              <%= render DS::Button.new(
                 text: t("powens_items.provider_panel.disconnect"),
                 icon: "trash-2",
                 variant: :outline_destructive,
@@ -66,6 +76,11 @@
               <%= form.text_field :domain,
                                   label: t("powens_items.provider_panel.domain_label"),
                                   placeholder: t("powens_items.provider_panel.domain_placeholder") %>
+
+              <%= form.text_field :client_id,
+                                  label: t("powens_items.provider_panel.client_id_label"),
+                                  placeholder: t("powens_items.provider_panel.client_id_placeholder"),
+                                  label_tooltip: t("powens_items.provider_panel.client_id_help") %>
 
               <%= form.text_field :access_token,
                                   label: t("powens_items.provider_panel.access_token_label"),
@@ -118,6 +133,11 @@
     <%= form.text_field :domain,
                         label: t("powens_items.provider_panel.domain_label"),
                         placeholder: t("powens_items.provider_panel.domain_placeholder") %>
+
+    <%= form.text_field :client_id,
+                        label: t("powens_items.provider_panel.client_id_label"),
+                        placeholder: t("powens_items.provider_panel.client_id_placeholder"),
+                        label_tooltip: t("powens_items.provider_panel.client_id_help") %>
 
     <%= form.text_field :access_token,
                         label: t("powens_items.provider_panel.access_token_label"),

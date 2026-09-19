@@ -1,0 +1,37 @@
+<%= content_for :page_title, t(".title") %>
+
+<div class="max-w-2xl space-y-4">
+  <% if @error.present? %>
+    <%= render DS::Alert.new(
+          variant: :error,
+          title: t(".error_title"),
+          message: t(".error_message", error: @error, description: @error_description)
+        ) %>
+  <% else %>
+    <%= render DS::Alert.new(
+          variant: :success,
+          title: t(".success_title"),
+          message: t(".success_message")
+        ) %>
+
+    <div class="bg-container shadow-border-xs rounded-xl p-4 space-y-2">
+      <% if @connection_id.present? %>
+        <p class="text-sm text-secondary"><%= t(".connection_id", id: @connection_id) %></p>
+      <% end %>
+
+      <% if @powens_item.present? %>
+        <p class="text-sm text-secondary"><%= t(".syncing", name: @powens_item.name) %></p>
+      <% end %>
+
+      <% if @code.present? %>
+        <p class="text-sm text-secondary pt-2"><%= t(".anonymous_code_notice") %></p>
+        <code class="block text-xs break-all bg-surface p-2 rounded"><%= @code %></code>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex flex-wrap gap-2">
+    <%= render DS::Link.new(text: t(".back_to_accounts"), href: accounts_path, variant: "primary") %>
+    <%= render DS::Link.new(text: t(".back_to_settings"), href: settings_providers_path, variant: "secondary") %>
+  </div>
+</div>

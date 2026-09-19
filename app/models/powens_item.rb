@@ -1,5 +1,5 @@
 class PowensItem < ApplicationRecord
-  include Syncable, Provided, Unlinking, Encryptable
+  include Syncable, Provided, Unlinking, Encryptable, DestroyableLater
 
   # Same host pattern as the API client (biapi.pro tenants only).
   DOMAIN_PATTERN = Provider::Powens::DOMAIN_PATTERN
@@ -28,12 +28,6 @@ class PowensItem < ApplicationRecord
   scope :syncable, -> { active }
   scope :ordered, -> { order(created_at: :desc) }
   scope :needs_update, -> { where(status: :requires_update) }
-
-  # Mark the item for deletion and enqueue the background destroy job.
-  def destroy_later
-    update!(scheduled_for_deletion: true)
-    DestroyJob.perform_later(self)
-  end
 
   # Run the importer to fetch the latest accounts/transactions from Powens.
   def import_latest_powens_data

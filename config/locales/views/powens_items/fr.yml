@@ -41,6 +41,10 @@ fr:
       access_token_label: Jeton d'accès utilisateur
       access_token_placeholder: Collez votre jeton d'accès utilisateur Powens
       keep_access_token_placeholder: Laissez vide pour conserver le jeton existant
+      client_id_label: ID client
+      client_id_placeholder: L'ID de votre application client Powens
+      client_id_help: Nécessaire pour ajouter une autre banque. Se trouve dans la console Powens, rubrique applications client. Utilisez le même client dont la liste des redirect URIs contient l'URL de callback de Sure.
+      add_bank: Ajouter une banque
       sync_start_date_label: Date de début d'historique
       sync_start_date_help: Laissez vide pour importer tout l'historique disponible (varie selon la banque)
       setup_accounts: Configurer les comptes
@@ -50,6 +54,21 @@ fr:
       disconnect_confirm: "Voulez-vous vraiment déconnecter %{name} ?"
     create:
       success: Connexion Powens enregistrée.
+    connect_bank:
+      no_credentials_configured: Configurez d'abord le domaine et le jeton Powens.
+      no_client_id: Renseignez d'abord l'ID client Powens de cette connexion.
+      api_error: Impossible de démarrer le flux de connexion Powens.
+    callback:
+      title: Connexion Powens
+      success_title: Connexion bancaire ajoutée
+      success_message: Powens importe les nouveaux comptes. Ils apparaîtront dans Sure dès la fin de la synchronisation.
+      error_title: La connexion bancaire n'a pas pu aboutir
+      error_message: "Erreur : %{error} (%{description})"
+      connection_id: "Identifiant de connexion Powens : %{id}"
+      syncing: "Synchronisation de %{name} en cours."
+      anonymous_code_notice: "Ce code n'est pas encore un jeton : échangez-le avec votre ID client et votre secret pour obtenir un jeton d'accès permanent (POST /auth/token/access)."
+      back_to_accounts: Aller aux comptes
+      back_to_settings: Retour aux réglages bancaires
     update:
       success: Connexion Powens mise à jour.
     destroy:

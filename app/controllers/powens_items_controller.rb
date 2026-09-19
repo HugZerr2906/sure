@@ -1,9 +1,9 @@
 class PowensItemsController < ApplicationController
-  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup ]
+  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank ]
   before_action :require_admin!, only: [
     :new, :create, :preload_accounts, :select_accounts, :link_accounts,
     :select_existing_account, :link_existing_account, :edit, :update,
-    :destroy, :sync, :setup_accounts, :complete_account_setup
+    :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank
   ]
 
   # List the family's active Powens connections in settings.
@@ -88,6 +88,49 @@ class PowensItemsController < ApplicationController
       format.html { redirect_back_or_to accounts_path }
       format.json { head :ok }
     end
+  end
+
+  # Hand the browser to the Powens Connect webview so the user can add another
+  # bank (and its accounts) to the same Powens user. The webview redirects back
+  # to #callback when the user is done.
+  def connect_bank
+    unless @powens_item.credentials_configured?
+      redirect_to settings_providers_path, alert: t(".no_credentials_configured"), status: :see_other
+      return
+    end
+
+    if @powens_item.client_id.blank?
+      redirect_to settings_providers_path, alert: t(".no_client_id"), status: :see_other
+      return
+    end
+
+    code = @powens_item.powens_provider.get_temporary_code
+    redirect_to powens_connect_webview_url(@powens_item, code), allow_other_host: true, status: :see_other
+  rescue Provider::Powens::PowensError => e
+    DebugLogEntry.capture(
+      category: "provider_sync_error",
+      level: "error",
+      message: "Powens API error while starting the connect webview",
+      source: self.class.name,
+      provider_key: "powens",
+      family: @powens_item.family,
+      metadata: { powens_item_id: @powens_item.id, error_class: e.class.name, error_message: e.message }
+    )
+    redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
+  end
+
+  # Landing page after the Connect webview redirects the browser back to Sure.
+  # Carries the new connection id, an optional anonymous-user code, and the
+  # item id we passed as `state`.
+  def callback
+    @error = params[:error].presence
+    @error_description = params[:error_description].presence
+    @connection_id = params[:connection_id].presence
+    @code = params[:code].presence
+    @powens_item = Current.family.powens_items.active.find_by(id: params[:state]) if params[:state].present?
+
+    # Pull the new bank's accounts in right away; linking happens in setup.
+    @powens_item&.sync_later if @error.blank?
   end
 
   # Fetch accounts from the API (JSON) so the UI can show whether any exist.
@@ -292,6 +335,21 @@ class PowensItemsController < ApplicationController
 
   private
 
+    # Build the Powens Connect webview URL: the temporary code ties the flow to
+    # the item's Powens user, `state` carries the item id back to #callback.
+    # The redirect_uri must be whitelisted in the Powens console.
+    def powens_connect_webview_url(powens_item, code)
+      query = {
+        domain: powens_item.domain,
+        client_id: powens_item.client_id,
+        redirect_uri: "#{request.base_url}#{powens_items_callback_path}",
+        code: code,
+        state: powens_item.id
+      }
+
+      "https://webview.powens.com/connect?#{query.to_query}"
+    end
+
     # Load the requested item scoped to the current family.
     def set_powens_item
       @powens_item = Current.family.powens_items.find(params[:id])
@@ -299,7 +357,7 @@ class PowensItemsController < ApplicationController
 
     # Strong params for creating/updating a connection.
     def powens_item_params
-      params.require(:powens_item).permit(:name, :sync_start_date, :domain, :access_token)
+      params.require(:powens_item).permit(:name, :sync_start_date, :domain, :client_id, :access_token)
     end
 
     # Params for update, dropping a blank token so it isn't overwritten.

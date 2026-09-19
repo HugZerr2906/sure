@@ -41,6 +41,10 @@ en:
       access_token_label: User access token
       access_token_placeholder: Paste your Powens user access token
       keep_access_token_placeholder: Leave blank to keep the existing token
+      client_id_label: Client ID
+      client_id_placeholder: Your Powens client application ID
+      client_id_help: Needed to add another bank. Find it in the Powens console, under client applications. Use the same client whose redirect URIs list this Sure callback URL.
+      add_bank: Add a bank
       sync_start_date_label: History start date
       sync_start_date_help: Leave blank to import all available history (varies by bank)
       setup_accounts: Setup accounts
@@ -50,6 +54,21 @@ en:
       disconnect_confirm: "Are you sure you want to disconnect %{name}?"
     create:
       success: Powens connection saved.
+    connect_bank:
+      no_credentials_configured: Configure the Powens domain and token first.
+      no_client_id: Add your Powens client ID to this connection first.
+      api_error: Could not start the Powens connect flow.
+    callback:
+      title: Powens connection
+      success_title: Bank connection added
+      success_message: Powens is importing the new accounts. They will show up in Sure as soon as the sync finishes.
+      error_title: The bank connection could not be completed
+      error_message: "Error: %{error} (%{description})"
+      connection_id: "Powens connection ID: %{id}"
+      syncing: "Syncing %{name} now."
+      anonymous_code_notice: "This code is not a token yet: exchange it with your client ID and secret to get a permanent access token (POST /auth/token/access)."
+      back_to_accounts: Go to accounts
+      back_to_settings: Back to bank sync settings
     update:
       success: Powens connection updated.
     destroy:

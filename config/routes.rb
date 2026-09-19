@@ -894,6 +894,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # Must precede `resources` so /powens_items/callback is not matched by #show.
+  get "powens_items/callback", to: "powens_items#callback", as: :powens_items_callback
+
   resources :powens_items, only: %i[index new create show edit update destroy] do
     collection do
       get :preload_accounts
@@ -907,6 +910,7 @@ Rails.application.routes.draw do
       post :sync
       get :setup_accounts
       post :complete_account_setup
+      post :connect_bank
     end
   end
 
