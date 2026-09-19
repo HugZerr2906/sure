@@ -9,6 +9,7 @@ class DataEnrichment < ApplicationRecord
     akahu: "akahu",
     up: "up",
     powens: "powens",
+    monobank: "monobank",
     synth: "synth",
     ai: "ai",
     enable_banking: "enable_banking",
@@ -19,6 +20,9 @@ class DataEnrichment < ApplicationRecord
     sophtron: "sophtron",
     ibkr: "ibkr",
     questrade: "questrade",
-    redbark: "redbark"
+    redbark: "redbark",
+    trade_republic: "trade_republic",
+    bayes: "bayes",
+    fio: "fio"
   }
 end
