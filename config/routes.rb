@@ -911,9 +911,7 @@ Rails.application.routes.draw do
       get :setup_accounts
       post :complete_account_setup
       post :connect_bank
-      post :refresh
       post :renew
-      post :resume
     end
   end
 

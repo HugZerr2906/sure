@@ -53,19 +53,15 @@
                 disabled: item.syncing?
               ) %>
               <%= render DS::Button.new(
-                text: if item.connection_state.present?
-                        t("powens_items.provider_panel.reauthorize_bank")
-                      else
-                        t("powens_items.provider_panel.force_sync")
-                      end,
-                icon: "landmark",
+                text: t("powens_items.provider_panel.renew"),
+                icon: "shield-check",
                 variant: :outline,
                 size: :sm,
-                href: refresh_powens_item_path(item),
+                href: renew_powens_item_path(item),
                 method: :post,
                 data: { turbo: false },
                 form: { data: { turbo: false } },
-                title: t("powens_items.provider_panel.force_sync_hint")
+                title: t("powens_items.provider_panel.renew_hint")
               ) %>
               <%= render DS::Button.new(
                 text: t("powens_items.provider_panel.add_bank"),
@@ -78,30 +74,6 @@
                 form: { data: { turbo: false } },
                 title: t("powens_items.provider_panel.add_bank_hint")
               ) %>
-              <% if item.connection_state.present? %>
-                <%= render DS::Button.new(
-                  text: t("powens_items.provider_panel.resume"),
-                  icon: "check",
-                  variant: :primary,
-                  size: :sm,
-                  href: resume_powens_item_path(item),
-                  method: :post,
-                  data: { turbo: false },
-                  form: { data: { turbo: false } }
-                ) %>
-              <% end %>
-              <% if item.access_expires_at.present? && item.access_expires_at <= 30.days.from_now.to_date %>
-                <%= render DS::Button.new(
-                  text: t("powens_items.provider_panel.renew"),
-                  icon: "shield-check",
-                  variant: :outline,
-                  size: :sm,
-                  href: renew_powens_item_path(item),
-                  method: :post,
-                  data: { turbo: false },
-                  form: { data: { turbo: false } }
-                ) %>
-              <% end %>
               <%= render DS::Button.new(
                 text: t("powens_items.provider_panel.disconnect"),
                 icon: "trash-2",

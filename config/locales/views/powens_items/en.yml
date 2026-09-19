@@ -45,14 +45,11 @@ en:
       client_id_placeholder: Your Powens client application ID
       client_id_help: Needed to add another bank. Find it in the Powens console, under client applications. Use the same client whose redirect URIs list this Sure callback URL.
       add_bank: Add a bank
-      reauthorize_bank: Re-authorize the bank
-      force_sync: Force a bank sync
-      force_sync_hint: "Asks Powens to query your bank now. Powens rate-limits these requests; when declined, the next automatic sync is shown. Never creates a new connection."
       renew: Renew the authorization
-      resume: I validated, resume the sync
-      add_bank_hint: Creates a new connection. For a bank you already connected, use 'Re-authorize the bank' instead.
+      renew_hint: "Asks your bank for a fresh authorization (a validation in its app may be required). When a connection waits for a validation, this also sends Powens the resuming signal. Never creates a new connection."
+      add_bank_hint: Creates a new connection. For a bank you already connected, use 'Renew the authorization' instead.
       connection_attention_title: This connection needs your attention
-      connection_attention_message: "Powens reports %{state}. Part of the accounts are no longer refreshed. Press 'Re-authorize the bank', approve the request in your bank app, then press 'I validated, resume the sync'."
+      connection_attention_message: "Powens reports %{state}. Part of the accounts are no longer refreshed. Press 'Renew the authorization', approve the request in your bank app, then sync again."
       access_expires_at: "Bank authorization valid until %{date}."
       access_expires_soon: "Bank authorization must be renewed before %{date} - use 'Renew the authorization'."
       sync_start_date_label: History start date
@@ -92,20 +89,13 @@ en:
       websiteUnavailable: bank website unavailable
       bug: Powens internal error
       notSupported: unsupported source
-    refresh:
-      success: Bank refresh requested. Powens is syncing with your banks now; refresh the page in a minute and sync again.
-      limited: Powens declined the forced sync for now - it rate-limits these requests. The data already available at Powens was pulled.
-      limited_with_date: Powens declined the forced sync for now - it rate-limits these requests. Your bank will be queried again automatically on %{date}. The data already available was pulled.
-      no_connections: No Powens connection to refresh.
-      api_error: Could not request a bank refresh.
     renew:
       success: Authorization renewal requested. Approve the request from your bank, then sync again.
+      resume_success: "Resume signal sent to Powens. Sync again in a minute to pull the data."
+      limited: "Powens declined the request for now (it rate-limits these calls). The data already available was pulled."
+      limited_with_date: "Powens declined the request for now (it rate-limits these calls). Your bank will be queried again automatically on %{date}. The data already available was pulled."
       no_connections: No Powens connection to renew.
       api_error: Could not request the authorization renewal.
-    resume:
-      success: Resume signal sent. Powens is syncing again; refresh the page in a minute and sync.
-      nothing_to_resume: No connection currently needs to be resumed.
-      api_error: Could not resume the connection.
     update:
       success: Powens connection updated.
     destroy:

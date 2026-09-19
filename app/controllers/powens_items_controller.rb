@@ -1,10 +1,10 @@
 class PowensItemsController < ApplicationController
-  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank, :refresh, :renew, :resume ]
+  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank, :renew ]
   before_action :require_admin!, only: [
     :new, :create, :preload_accounts, :select_accounts, :link_accounts,
     :select_existing_account, :link_existing_account, :edit, :update,
     :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank,
-    :refresh, :renew, :resume
+    :renew
   ]
 
   # List the family's active Powens connections in settings.
@@ -127,48 +127,16 @@ class PowensItemsController < ApplicationController
     @powens_item&.sync_later if @error.blank?
   end
 
-  # Ask Powens to synchronize the item's connections with the banks again, then
-  # pull the result. Existing accounts are updated, never duplicated.
+  # Re-authorize the item's banks, then pull the result. Two situations:
   #
-  # Powens rate-limits forced syncs (each connection is normally synced once a
-  # day) and answers 409 conflict when it declines, so that case gets a plain
-  # explanation with the next scheduled sync instead of a generic error.
-  def refresh
-    provider = @powens_item.powens_provider
-    connections = provider.get_connections
-
-    if connections.empty?
-      redirect_to settings_providers_path, alert: t(".no_connections"), status: :see_other
-      return
-    end
-
-    refused = 0
-    failures = 0
-
-    connections.each do |connection|
-      provider.sync_connection(connection.with_indifferent_access[:id])
-    rescue Provider::Powens::PowensError => e
-      if e.error_type == :conflict
-        refused += 1
-      else
-        failures += 1
-        capture_provider_error("Failed to trigger a bank refresh", e)
-      end
-    end
-
-    @powens_item.sync_later
-
-    if refused == connections.size
-      redirect_to settings_providers_path, notice: refusal_message(connections), status: :see_other
-    elsif failures.positive?
-      redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
-    else
-      redirect_to settings_providers_path, notice: t(".success"), status: :see_other
-    end
-  end
-
-  # Renew the PSD2 authorization before it expires (Powens consents last about
-  # 180 days). This asks the bank for a fresh consent, which triggers an SCA.
+  # - a connection waits for the user (decoupled SCA to approve in the bank app,
+  #   or extra information): send Powens the resuming signal documented for that
+  #   state once the user approved it;
+  # - every connection is healthy: renew the PSD2 consent, which asks the bank
+  #   for a fresh authorization (Powens consents last about 180 days).
+  #
+  # Powens rate-limits these calls and answers 409 conflict when it declines, so
+  # that case gets a plain explanation instead of a generic error.
   def renew
     provider = @powens_item.powens_provider
     connections = provider.get_connections
@@ -178,35 +146,36 @@ class PowensItemsController < ApplicationController
       return
     end
 
+    awaiting_user = connections.any? { |connection| powens_connection_awaiting_user?(connection) }
+    refused = 0
+    failures = 0
+
     connections.each do |connection|
-      provider.renew_authorization(connection.with_indifferent_access[:id])
-    end
-    @powens_item.sync_later
-
-    redirect_to settings_providers_path, notice: t(".success"), status: :see_other
-  rescue Provider::Powens::PowensError => e
-    capture_provider_error("Failed to renew the Powens authorization", e)
-    redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
-  end
-
-  # Signal Powens that the user approved a decoupled SCA in their bank app, then
-  # pull the refreshed data.
-  def resume
-    provider = @powens_item.powens_provider
-    connection = powens_connection_needing_attention(provider.get_connections)
-
-    if connection.nil?
-      redirect_to settings_providers_path, alert: t(".nothing_to_resume"), status: :see_other
-      return
+      if awaiting_user
+        provider.resume_connection(connection.with_indifferent_access[:id])
+      else
+        provider.renew_authorization(connection.with_indifferent_access[:id])
+      end
+    rescue Provider::Powens::PowensError => e
+      if e.error_type == :conflict
+        refused += 1
+      else
+        failures += 1
+        capture_provider_error("Failed to renew the Powens authorization", e)
+      end
     end
 
-    provider.resume_connection(connection.with_indifferent_access[:id])
     @powens_item.sync_later
 
-    redirect_to settings_providers_path, notice: t(".success"), status: :see_other
-  rescue Provider::Powens::PowensError => e
-    capture_provider_error("Failed to resume the Powens connection", e)
-    redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
+    if refused == connections.size
+      redirect_to settings_providers_path, notice: refusal_message(connections), status: :see_other
+    elsif failures.positive?
+      redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
+    elsif awaiting_user
+      redirect_to settings_providers_path, notice: t(".resume_success"), status: :see_other
+    else
+      redirect_to settings_providers_path, notice: t(".success"), status: :see_other
+    end
   end
 
   # Fetch accounts from the API (JSON) so the UI can show whether any exist.
@@ -411,14 +380,14 @@ class PowensItemsController < ApplicationController
 
   private
 
-    # First connection whose state requires user action, or nil when every
-    # connection is healthy.
-    def powens_connection_needing_attention(connections)
-      connections.find { |connection| connection.with_indifferent_access[:state].present? }
+    # States where Powens waits for the user to approve the connection in their
+    # bank app (or to provide extra information) and expects the resuming signal
+    # rather than a consent renewal.
+    def powens_connection_awaiting_user?(connection)
+      connection.with_indifferent_access[:state].to_s.in?(%w[decoupled validating additionalInformationNeeded])
     end
 
-    # Powens declined the forced sync: explain why and when the bank will be
-    # queried again on its own.
+    # Powens declined the request: explain when the bank is queried again anyway.
     def refusal_message(connections)
       next_try = connections.filter_map { |connection| connection.with_indifferent_access[:next_try].presence }.min
       scheduled_at = begin

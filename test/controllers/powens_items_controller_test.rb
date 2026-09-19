@@ -67,40 +67,6 @@ class PowensItemsControllerTest < ActionDispatch::IntegrationTest
     assert_match "access_denied", @response.body
   end
 
-  test "refresh asks Powens to sync the connections and queues a Sure sync" do
-    Provider::Powens.any_instance
-      .expects(:get_connections)
-      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "SCARequired") ])
-    Provider::Powens.any_instance.expects(:sync_connection).with(3)
-
-    assert_enqueued_with(job: SyncJob) do
-      post refresh_powens_item_url(@powens_item)
-    end
-
-    assert_redirected_to settings_providers_path
-    assert_equal I18n.t("powens_items.refresh.success"), flash[:notice]
-  end
-
-  test "refresh explains a declined forced sync and still pulls the data" do
-    Provider::Powens.any_instance
-      .expects(:get_connections)
-      .returns([
-        ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil, next_try: "2026-09-20 16:47:06")
-      ])
-    Provider::Powens.any_instance
-      .expects(:sync_connection)
-      .with(3)
-      .raises(Provider::Powens::PowensError.new("Powens conflict: conflict", :conflict))
-
-    assert_enqueued_with(job: SyncJob) do
-      post refresh_powens_item_url(@powens_item)
-    end
-
-    assert_redirected_to settings_providers_path
-    assert flash[:notice].present?, "expected an explanatory notice"
-    assert_nil flash[:alert]
-  end
-
   test "renew requests a fresh bank authorization and queues a Sure sync" do
     Provider::Powens.any_instance
       .expects(:get_connections)
@@ -124,28 +90,37 @@ class PowensItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("powens_items.renew.no_connections"), flash[:alert]
   end
 
-  test "resume signals Powens and queues a Sure sync" do
+  test "renew resumes a connection waiting for the user instead of renewing consent" do
     Provider::Powens.any_instance
       .expects(:get_connections)
       .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "decoupled") ])
     Provider::Powens.any_instance.expects(:resume_connection).with(3)
 
     assert_enqueued_with(job: SyncJob) do
-      post resume_powens_item_url(@powens_item)
+      post renew_powens_item_url(@powens_item)
     end
 
     assert_redirected_to settings_providers_path
-    assert_equal I18n.t("powens_items.resume.success"), flash[:notice]
+    assert_equal I18n.t("powens_items.renew.resume_success"), flash[:notice]
   end
 
-  test "resume reports when no connection needs a resume signal" do
+  test "renew explains a declined request and still pulls the data" do
     Provider::Powens.any_instance
       .expects(:get_connections)
-      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil) ])
+      .returns([
+        ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil, next_try: "2026-09-20 16:47:06")
+      ])
+    Provider::Powens.any_instance
+      .expects(:renew_authorization)
+      .with(3)
+      .raises(Provider::Powens::PowensError.new("Powens conflict: conflict", :conflict))
 
-    post resume_powens_item_url(@powens_item)
+    assert_enqueued_with(job: SyncJob) do
+      post renew_powens_item_url(@powens_item)
+    end
 
     assert_redirected_to settings_providers_path
-    assert_equal I18n.t("powens_items.resume.nothing_to_resume"), flash[:alert]
+    assert flash[:notice].present?, "expected an explanatory notice"
+    assert_nil flash[:alert]
   end
 end
