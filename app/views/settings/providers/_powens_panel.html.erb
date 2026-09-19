@@ -32,7 +32,16 @@
           <% end %>
 
           <div class="mt-4 space-y-4">
-            <div class="flex items-center gap-2">
+            <% if item.connection_state.present? %>
+              <%= render DS::Alert.new(
+                    variant: :warning,
+                    title: t("powens_items.provider_panel.connection_attention_title"),
+                    message: t("powens_items.provider_panel.connection_attention_message",
+                               state: t("powens_items.connection_states.#{item.connection_state}", default: item.connection_state))
+                  ) %>
+            <% end %>
+
+            <div class="flex flex-wrap items-center gap-2">
               <%= render DS::Button.new(
                 text: t("powens_items.provider_panel.sync"),
                 icon: "refresh-cw",
@@ -41,6 +50,16 @@
                 href: sync_powens_item_path(item),
                 method: :post,
                 disabled: item.syncing?
+              ) %>
+              <%= render DS::Button.new(
+                text: t("powens_items.provider_panel.refresh_from_bank"),
+                icon: "landmark",
+                variant: :outline,
+                size: :sm,
+                href: refresh_powens_item_path(item),
+                method: :post,
+                data: { turbo: false },
+                form: { data: { turbo: false } }
               ) %>
               <%= render DS::Button.new(
                 text: t("powens_items.provider_panel.add_bank"),
@@ -52,6 +71,18 @@
                 data: { turbo: false },
                 form: { data: { turbo: false } }
               ) %>
+              <% if item.connection_state.present? && item.client_id.present? %>
+                <%= render DS::Button.new(
+                  text: t("powens_items.provider_panel.reauthorize"),
+                  icon: "shield-check",
+                  variant: :primary,
+                  size: :sm,
+                  href: reauthorize_powens_item_path(item),
+                  method: :post,
+                  data: { turbo: false },
+                  form: { data: { turbo: false } }
+                ) %>
+              <% end %>
               <%= render DS::Button.new(
                 text: t("powens_items.provider_panel.disconnect"),
                 icon: "trash-2",

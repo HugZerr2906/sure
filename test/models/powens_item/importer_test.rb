@@ -4,10 +4,15 @@ class PowensItem::ImporterTest < ActiveSupport::TestCase
   class FakePowensProvider
     attr_reader :transaction_calls
 
-    def initialize(accounts: nil, transactions: nil)
+    def initialize(accounts: nil, transactions: nil, connections: [])
       @transaction_calls = []
       @accounts = accounts
       @transactions = transactions
+      @connections = connections
+    end
+
+    def get_connections
+      @connections
     end
 
     def get_accounts
@@ -137,6 +142,27 @@ class PowensItem::ImporterTest < ActiveSupport::TestCase
     @powens_account.reload
     assert_equal [ 7000 ], @powens_account.raw_transactions_payload.map { |tx| tx["id"] }
     assert_equal false, @powens_account.raw_transactions_payload.first["coming"]
+  end
+
+  test "stores the connection state and flags the item for attention" do
+    provider = FakePowensProvider.new(connections: [ { id: 3, state: "SCARequired" } ])
+
+    PowensItem::Importer.new(@powens_item, powens_provider: provider).import
+
+    @powens_item.reload
+    assert_equal "SCARequired", @powens_item.connection_state
+    assert_predicate @powens_item, :requires_update?
+  end
+
+  test "clears the connection state when every connection is healthy" do
+    @powens_item.update!(connection_state: "SCARequired", status: "requires_update")
+    provider = FakePowensProvider.new(connections: [ { id: 3, state: nil } ])
+
+    PowensItem::Importer.new(@powens_item, powens_provider: provider).import
+
+    @powens_item.reload
+    assert_nil @powens_item.connection_state
+    assert_predicate @powens_item, :good?
   end
 
   private

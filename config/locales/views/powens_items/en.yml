@@ -45,6 +45,10 @@ en:
       client_id_placeholder: Your Powens client application ID
       client_id_help: Needed to add another bank. Find it in the Powens console, under client applications. Use the same client whose redirect URIs list this Sure callback URL.
       add_bank: Add a bank
+      refresh_from_bank: Refresh from bank
+      reauthorize: Re-authenticate
+      connection_attention_title: This connection needs your attention
+      connection_attention_message: "Powens reports %{state}. The bank data is not being refreshed until this is resolved."
       sync_start_date_label: History start date
       sync_start_date_help: Leave blank to import all available history (varies by bank)
       setup_accounts: Setup accounts
@@ -69,6 +73,29 @@ en:
       anonymous_code_notice: "This code is not a token yet: exchange it with your client ID and secret to get a permanent access token (POST /auth/token/access)."
       back_to_accounts: Go to accounts
       back_to_settings: Back to bank sync settings
+    connection_states:
+      SCARequired: strong authentication required
+      webauthRequired: web authentication required
+      additionalInformationNeeded: additional information required
+      decoupled: validation required in your bank app
+      validating: validation in progress
+      actionNeeded: action required on the bank website
+      passwordExpired: password expired
+      wrongpass: credentials must be updated
+      rateLimiting: temporarily rate limited by the bank
+      websiteUnavailable: bank website unavailable
+      bug: Powens internal error
+      notSupported: unsupported source
+    refresh:
+      success: Bank refresh requested. Powens is syncing with your banks now; refresh the page in a minute and sync again.
+      no_connections: No Powens connection to refresh.
+      api_error: Could not request a bank refresh.
+    reauthorize:
+      no_credentials_configured: Configure the Powens domain and token first.
+      no_client_id: Add your Powens client ID to this connection first.
+      nothing_to_resume: No connection currently needs re-authentication.
+      already_up_to_date: This connection is already up to date.
+      api_error: Could not start the re-authentication.
     update:
       success: Powens connection updated.
     destroy:

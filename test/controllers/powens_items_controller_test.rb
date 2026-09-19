@@ -66,4 +66,49 @@ class PowensItemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "access_denied", @response.body
   end
+
+  test "refresh asks Powens to sync the connections and queues a Sure sync" do
+    Provider::Powens.any_instance
+      .expects(:get_connections)
+      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "SCARequired") ])
+    Provider::Powens.any_instance.expects(:sync_connection).with(3)
+
+    assert_enqueued_with(job: SyncJob) do
+      post refresh_powens_item_url(@powens_item)
+    end
+
+    assert_redirected_to settings_providers_path
+    assert_equal I18n.t("powens_items.refresh.success"), flash[:notice]
+  end
+
+  test "reauthorize redirects to the Powens webauth url" do
+    Provider::Powens.any_instance
+      .expects(:get_connections)
+      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "SCARequired") ])
+    Provider::Powens.any_instance
+      .expects(:webauth_url)
+      .with(
+        connection_id: 3,
+        client_id: "client-123",
+        redirect_uri: "http://www.example.com/powens_items/callback",
+        state: @powens_item.id
+      )
+      .returns("https://webauth.powens.com/resume")
+
+    post reauthorize_powens_item_url(@powens_item)
+
+    assert_response :see_other
+    assert_equal "https://webauth.powens.com/resume", @response.location
+  end
+
+  test "reauthorize reports when no connection needs attention" do
+    Provider::Powens.any_instance
+      .expects(:get_connections)
+      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil) ])
+
+    post reauthorize_powens_item_url(@powens_item)
+
+    assert_redirected_to settings_providers_path
+    assert_equal I18n.t("powens_items.reauthorize.nothing_to_resume"), flash[:alert]
+  end
 end

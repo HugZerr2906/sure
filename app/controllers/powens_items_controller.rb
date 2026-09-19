@@ -1,9 +1,10 @@
 class PowensItemsController < ApplicationController
-  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank ]
+  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank, :refresh, :reauthorize ]
   before_action :require_admin!, only: [
     :new, :create, :preload_accounts, :select_accounts, :link_accounts,
     :select_existing_account, :link_existing_account, :edit, :update,
-    :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank
+    :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank,
+    :refresh, :reauthorize
   ]
 
   # List the family's active Powens connections in settings.
@@ -107,15 +108,7 @@ class PowensItemsController < ApplicationController
     code = @powens_item.powens_provider.get_temporary_code
     redirect_to powens_connect_webview_url(@powens_item, code), allow_other_host: true, status: :see_other
   rescue Provider::Powens::PowensError => e
-    DebugLogEntry.capture(
-      category: "provider_sync_error",
-      level: "error",
-      message: "Powens API error while starting the connect webview",
-      source: self.class.name,
-      provider_key: "powens",
-      family: @powens_item.family,
-      metadata: { powens_item_id: @powens_item.id, error_class: e.class.name, error_message: e.message }
-    )
+    capture_provider_error("Powens API error while starting the connect webview", e)
     redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
   end
 
@@ -125,12 +118,74 @@ class PowensItemsController < ApplicationController
   def callback
     @error = params[:error].presence
     @error_description = params[:error_description].presence
-    @connection_id = params[:connection_id].presence
+    # The Connect webview returns connection_id; the webauth flow returns id_connection.
+    @connection_id = (params[:connection_id].presence || params[:id_connection].presence)
     @code = params[:code].presence
     @powens_item = Current.family.powens_items.active.find_by(id: params[:state]) if params[:state].present?
 
     # Pull the new bank's accounts in right away; linking happens in setup.
     @powens_item&.sync_later if @error.blank?
+  end
+
+  # Ask Powens to synchronize the item's connections with the banks again, then
+  # pull the result. Existing accounts are updated, never duplicated.
+  def refresh
+    provider = @powens_item.powens_provider
+    connections = provider.get_connections
+
+    if connections.empty?
+      redirect_to settings_providers_path, alert: t(".no_connections"), status: :see_other
+      return
+    end
+
+    connections.each do |connection|
+      provider.sync_connection(connection.with_indifferent_access[:id])
+    end
+    @powens_item.sync_later
+
+    redirect_to settings_providers_path, notice: t(".success"), status: :see_other
+  rescue Provider::Powens::PowensError => e
+    capture_provider_error("Failed to trigger a bank refresh", e)
+    redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
+  end
+
+  # Resume a connection that needs SCA / consent renewal: build the webauth URL
+  # and hand the browser to it.
+  def reauthorize
+    unless @powens_item.credentials_configured?
+      redirect_to settings_providers_path, alert: t(".no_credentials_configured"), status: :see_other
+      return
+    end
+
+    if @powens_item.client_id.blank?
+      redirect_to settings_providers_path, alert: t(".no_client_id"), status: :see_other
+      return
+    end
+
+    provider = @powens_item.powens_provider
+    connection = powens_connection_needing_attention(provider)
+
+    if connection.nil?
+      redirect_to settings_providers_path, alert: t(".nothing_to_resume"), status: :see_other
+      return
+    end
+
+    url = provider.webauth_url(
+      connection_id: connection.with_indifferent_access[:id],
+      client_id: @powens_item.client_id,
+      redirect_uri: "#{request.base_url}#{powens_items_callback_path}",
+      state: @powens_item.id
+    )
+
+    redirect_to url, allow_other_host: true, status: :see_other
+  rescue Provider::Powens::PowensError => e
+    capture_provider_error("Failed to start the Powens re-authentication", e)
+
+    if e.error_type == :conflict
+      redirect_to settings_providers_path, notice: t(".already_up_to_date"), status: :see_other
+    else
+      redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
+    end
   end
 
   # Fetch accounts from the API (JSON) so the UI can show whether any exist.
@@ -334,6 +389,25 @@ class PowensItemsController < ApplicationController
   end
 
   private
+
+    # First connection whose state requires user action, or nil when every
+    # connection is healthy.
+    def powens_connection_needing_attention(provider)
+      provider.get_connections.find { |connection| connection.with_indifferent_access[:state].present? }
+    end
+
+    # Record a provider error with structured metadata for support.
+    def capture_provider_error(message, error)
+      DebugLogEntry.capture(
+        category: "provider_sync_error",
+        level: "error",
+        message: message,
+        source: self.class.name,
+        provider_key: "powens",
+        family: @powens_item.family,
+        metadata: { powens_item_id: @powens_item.id, error_class: error.class.name, error_message: error.message }
+      )
+    end
 
     # Build the Powens Connect webview URL: the temporary code ties the flow to
     # the item's Powens user, `state` carries the item id back to #callback.

@@ -20,6 +20,7 @@ class PowensItem::Importer
     return failed_result("Failed to fetch accounts data") unless accounts_data
 
     powens_item.upsert_powens_snapshot!(accounts_data)
+    refresh_connection_state
 
     account_stats = import_accounts(accounts_data)
     transaction_stats = import_transactions
@@ -41,6 +42,18 @@ class PowensItem::Importer
   end
 
   private
+
+    # Record the connection state Powens reports (nil when the last sync
+    # succeeded) so settings can prompt a re-authentication when a connection is
+    # stuck in SCARequired / webauthRequired / ... Never fails the import.
+    def refresh_connection_state
+      connections = powens_provider.get_connections
+      state = connections.filter_map { |connection| connection.with_indifferent_access[:state].presence }.first
+
+      powens_item.update!(connection_state: state, status: state.present? ? "requires_update" : "good")
+    rescue => e
+      Rails.logger.warn "PowensItem::Importer - Could not read connection state: #{e.class} - #{e.message}"
+    end
 
     # Fetch the current account list from Powens, returning a hash of +items+ or
     # +nil+ on any provider/parse error (which is logged and captured).

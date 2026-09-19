@@ -61,6 +61,37 @@ class Provider::Powens
     payload[:code].presence
   end
 
+  # GET /users/me/connections — every connection of the user with its sync
+  # state (nil state means the last synchronization succeeded).
+  def get_connections
+    payload = get("users/me/connections")
+    Array(payload[:connections])
+  end
+
+  # PUT /users/me/connections/{connectionId}?psu_requested=true — asks Powens to
+  # synchronize this connection with the bank again. May trigger an SCA.
+  def sync_connection(connection_id, psu_requested: true)
+    put(
+      "users/me/connections/#{ERB::Util.url_encode(connection_id.to_s)}",
+      query: { psu_requested: psu_requested }
+    )
+  end
+
+  # GET /webauth-url — URL to present to the user to add a connection or resume
+  # one that needs SCA / consent renewal. Raises PowensError(:conflict) when the
+  # connection is already up to date.
+  def webauth_url(connection_id:, client_id:, redirect_uri:, state: nil)
+    query = {
+      client_id: client_id,
+      redirect_uri: redirect_uri,
+      id_connection: connection_id
+    }
+    query[:state] = state if state.present?
+
+    payload = get("webauth-url", query: query)
+    payload[:url].presence
+  end
+
   private
 
     RETRYABLE_ERRORS = [
@@ -109,6 +140,20 @@ class Provider::Powens
       with_retries("POST #{path}") do
         url = resolve_url(path)
         response = self.class.post(
+          url,
+          headers: auth_headers.merge("Content-Type" => "application/json"),
+          query: query,
+          body: body
+        )
+        handle_response(response)
+      end
+    end
+
+    # Issues a PUT request to a relative path.
+    def put(path, query: nil, body: nil)
+      with_retries("PUT #{path}") do
+        url = resolve_url(path)
+        response = self.class.put(
           url,
           headers: auth_headers.merge("Content-Type" => "application/json"),
           query: query,

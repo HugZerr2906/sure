@@ -137,4 +137,72 @@ class Provider::PowensTest < ActiveSupport::TestCase
       assert_nil client.get_temporary_code
     end
   end
+
+  test "lists connections with their sync states" do
+    requests = []
+
+    Provider::Powens.stub(:get, ->(url, headers:, query: nil) {
+      requests << { url: url, query: query }
+      FakeResponse.new(
+        code: 200,
+        message: "OK",
+        body: {
+          connections: [
+            { id: 3, id_connector: 1, state: "SCARequired", active: true },
+            { id: 7, id_connector: 4, state: nil, active: true }
+          ]
+        }.to_json
+      )
+    }) do
+      client = Provider::Powens.new(domain: "my.biapi.pro", access_token: "powens-token")
+      connections = client.get_connections
+
+      assert_equal [ 3, 7 ], connections.map { |connection| connection[:id] }
+      assert_equal "SCARequired", connections.first[:state]
+      assert_nil connections.second[:state]
+    end
+
+    assert_match %r{/users/me/connections}, requests.first[:url]
+  end
+
+  test "requests a bank refresh for a connection with a PUT" do
+    requests = []
+
+    Provider::Powens.stub(:put, ->(url, headers:, query: nil, body: nil) {
+      requests << { url: url, headers: headers, query: query }
+      FakeResponse.new(code: 200, message: "OK", body: { id: 3, state: nil }.to_json)
+    }) do
+      client = Provider::Powens.new(domain: "my.biapi.pro", access_token: "powens-token")
+      client.sync_connection(3)
+    end
+
+    assert_equal 1, requests.size
+    assert_match %r{/users/me/connections/3}, requests.first[:url]
+    assert_equal true, requests.first[:query][:psu_requested]
+    assert_equal "Bearer powens-token", requests.first[:headers]["Authorization"]
+  end
+
+  test "builds a webauth url to resume a connection" do
+    requests = []
+
+    Provider::Powens.stub(:get, ->(url, headers:, query: nil) {
+      requests << { url: url, query: query }
+      FakeResponse.new(code: 200, message: "OK", body: { url: "https://webauth.powens.com/x" }.to_json)
+    }) do
+      client = Provider::Powens.new(domain: "my.biapi.pro", access_token: "powens-token")
+      url = client.webauth_url(
+        connection_id: 3,
+        client_id: "client-1",
+        redirect_uri: "http://localhost:3000/powens_items/callback",
+        state: "item-id"
+      )
+
+      assert_equal "https://webauth.powens.com/x", url
+    end
+
+    assert_match %r{/webauth-url}, requests.first[:url]
+    assert_equal 3, requests.first[:query][:id_connection]
+    assert_equal "client-1", requests.first[:query][:client_id]
+    assert_equal "item-id", requests.first[:query][:state]
+  end
 end

@@ -45,6 +45,10 @@ fr:
       client_id_placeholder: L'ID de votre application client Powens
       client_id_help: Nécessaire pour ajouter une autre banque. Se trouve dans la console Powens, rubrique applications client. Utilisez le même client dont la liste des redirect URIs contient l'URL de callback de Sure.
       add_bank: Ajouter une banque
+      refresh_from_bank: Rafraîchir depuis la banque
+      reauthorize: Se ré-authentifier
+      connection_attention_title: Cette connexion demande votre attention
+      connection_attention_message: "Powens signale : %{state}. Les données de la banque ne sont plus rafraîchies tant que ce n'est pas résolu."
       sync_start_date_label: Date de début d'historique
       sync_start_date_help: Laissez vide pour importer tout l'historique disponible (varie selon la banque)
       setup_accounts: Configurer les comptes
@@ -69,6 +73,29 @@ fr:
       anonymous_code_notice: "Ce code n'est pas encore un jeton : échangez-le avec votre ID client et votre secret pour obtenir un jeton d'accès permanent (POST /auth/token/access)."
       back_to_accounts: Aller aux comptes
       back_to_settings: Retour aux réglages bancaires
+    connection_states:
+      SCARequired: authentification forte requise
+      webauthRequired: authentification web requise
+      additionalInformationNeeded: information complémentaire requise
+      decoupled: validation requise dans l'app de votre banque
+      validating: validation en cours
+      actionNeeded: action requise sur le site de la banque
+      passwordExpired: mot de passe expiré
+      wrongpass: identifiants à mettre à jour
+      rateLimiting: temporairement limité par la banque
+      websiteUnavailable: site de la banque indisponible
+      bug: erreur interne Powens
+      notSupported: source non supportée
+    refresh:
+      success: Rafraîchissement demandé. Powens interroge vos banques maintenant ; rechargez la page dans une minute puis relancez Sync.
+      no_connections: Aucune connexion Powens à rafraîchir.
+      api_error: Impossible de demander le rafraîchissement bancaire.
+    reauthorize:
+      no_credentials_configured: Configurez d'abord le domaine et le jeton Powens.
+      no_client_id: Renseignez d'abord l'ID client Powens de cette connexion.
+      nothing_to_resume: Aucune connexion à ré-authentifier pour l'instant.
+      already_up_to_date: Cette connexion est déjà à jour.
+      api_error: Impossible de démarrer la ré-authentification.
     update:
       success: Connexion Powens mise à jour.
     destroy:
