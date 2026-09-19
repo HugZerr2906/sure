@@ -92,6 +92,18 @@ class Provider::Powens
     payload[:url].presence
   end
 
+  # POST /users/me/connections/{connectionId}?background=true { "resume": true }
+  # Sends the resuming signal after the user validated a decoupled SCA in their
+  # bank app. background=true keeps the call from blocking until the bank
+  # completes the validation.
+  def resume_connection(connection_id)
+    post(
+      "users/me/connections/#{ERB::Util.url_encode(connection_id.to_s)}",
+      query: { background: true },
+      body: { resume: true }.to_json
+    )
+  end
+
   private
 
     RETRYABLE_ERRORS = [

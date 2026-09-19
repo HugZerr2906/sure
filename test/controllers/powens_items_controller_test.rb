@@ -111,4 +111,29 @@ class PowensItemsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to settings_providers_path
     assert_equal I18n.t("powens_items.reauthorize.nothing_to_resume"), flash[:alert]
   end
+
+  test "resume signals Powens and queues a Sure sync" do
+    Provider::Powens.any_instance
+      .expects(:get_connections)
+      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "decoupled") ])
+    Provider::Powens.any_instance.expects(:resume_connection).with(3)
+
+    assert_enqueued_with(job: SyncJob) do
+      post resume_powens_item_url(@powens_item)
+    end
+
+    assert_redirected_to settings_providers_path
+    assert_equal I18n.t("powens_items.resume.success"), flash[:notice]
+  end
+
+  test "resume reports when no connection needs a resume signal" do
+    Provider::Powens.any_instance
+      .expects(:get_connections)
+      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil) ])
+
+    post resume_powens_item_url(@powens_item)
+
+    assert_redirected_to settings_providers_path
+    assert_equal I18n.t("powens_items.resume.nothing_to_resume"), flash[:alert]
+  end
 end

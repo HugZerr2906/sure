@@ -913,6 +913,7 @@ Rails.application.routes.draw do
       post :connect_bank
       post :refresh
       post :reauthorize
+      post :resume
     end
   end
 

@@ -47,8 +47,10 @@ fr:
       add_bank: Ajouter une banque
       refresh_from_bank: Rafraîchir depuis la banque
       reauthorize: Se ré-authentifier
+      resume: J'ai validé, reprendre la synchro
       connection_attention_title: Cette connexion demande votre attention
       connection_attention_message: "Powens signale : %{state}. Les données de la banque ne sont plus rafraîchies tant que ce n'est pas résolu."
+      connection_attention_decoupled: Votre banque demande une validation dans son application mobile. Validez la connexion dans l'appli Crédit Mutuel, puis cliquez sur le bouton ci-dessous.
       sync_start_date_label: Date de début d'historique
       sync_start_date_help: Laissez vide pour importer tout l'historique disponible (varie selon la banque)
       setup_accounts: Configurer les comptes
@@ -96,6 +98,10 @@ fr:
       nothing_to_resume: Aucune connexion à ré-authentifier pour l'instant.
       already_up_to_date: Cette connexion est déjà à jour.
       api_error: Impossible de démarrer la ré-authentification.
+    resume:
+      success: Signal de reprise envoyé. Powens resynchronise ; rechargez la page dans une minute puis relancez Sync.
+      nothing_to_resume: Aucune connexion à reprendre pour l'instant.
+      api_error: Impossible de reprendre la connexion.
     update:
       success: Connexion Powens mise à jour.
     destroy:

@@ -1,10 +1,10 @@
 class PowensItemsController < ApplicationController
-  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank, :refresh, :reauthorize ]
+  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank, :refresh, :reauthorize, :resume ]
   before_action :require_admin!, only: [
     :new, :create, :preload_accounts, :select_accounts, :link_accounts,
     :select_existing_account, :link_existing_account, :edit, :update,
     :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank,
-    :refresh, :reauthorize
+    :refresh, :reauthorize, :resume
   ]
 
   # List the family's active Powens connections in settings.
@@ -186,6 +186,26 @@ class PowensItemsController < ApplicationController
     else
       redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
     end
+  end
+
+  # Signal Powens that the user approved a decoupled SCA in their bank app, then
+  # pull the refreshed data.
+  def resume
+    provider = @powens_item.powens_provider
+    connection = powens_connection_needing_attention(provider)
+
+    if connection.nil?
+      redirect_to settings_providers_path, alert: t(".nothing_to_resume"), status: :see_other
+      return
+    end
+
+    provider.resume_connection(connection.with_indifferent_access[:id])
+    @powens_item.sync_later
+
+    redirect_to settings_providers_path, notice: t(".success"), status: :see_other
+  rescue Provider::Powens::PowensError => e
+    capture_provider_error("Failed to resume the Powens connection", e)
+    redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
   end
 
   # Fetch accounts from the API (JSON) so the UI can show whether any exist.
