@@ -3,6 +3,7 @@
 ## Working in the repository
 
 - Read [architecture and conventions](docs/llm-guides/architecture.md) before changing code, and the relevant [task guides](docs/llm-guides/README.md).
+- This fork adds a Powens provider: read [the fork notes](docs/powens-fork.md) before merging upstream or touching anything Powens-related.
 - Rails code lives in `app/`; keep business logic in models, concerns and POROs, with thin controllers. JavaScript is in `app/javascript/`, components in `app/components/`, assets in `app/assets/`, and configuration in `config/`.
 - Minitest tests mirror `app/` under `test/`; fixtures are in `test/fixtures/`. Migrations and schema are in `db/`, scripts in `bin/`, shared libraries in `lib/`.
 - Use `Current.user` and `Current.family`, never `current_user` or `current_family`. Preserve family tenancy and existing authorization boundaries.
