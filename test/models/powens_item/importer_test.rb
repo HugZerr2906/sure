@@ -4,15 +4,20 @@ class PowensItem::ImporterTest < ActiveSupport::TestCase
   class FakePowensProvider
     attr_reader :transaction_calls
 
-    def initialize(accounts: nil, transactions: nil, connections: [])
+    def initialize(accounts: nil, transactions: nil, connections: [], sources: {})
       @transaction_calls = []
       @accounts = accounts
       @transactions = transactions
       @connections = connections
+      @sources = sources
     end
 
     def get_connections
       @connections
+    end
+
+    def get_connection_sources(connection_id)
+      @sources.fetch(connection_id, [])
     end
 
     def get_accounts
@@ -145,23 +150,38 @@ class PowensItem::ImporterTest < ActiveSupport::TestCase
   end
 
   test "stores the connection state and flags the item for attention" do
-    provider = FakePowensProvider.new(connections: [ { id: 3, state: "SCARequired" } ])
+    provider = FakePowensProvider.new(
+      connections: [ { id: 3, state: "SCARequired" } ],
+      sources: {
+        3 => [
+          { id: 5, name: "openapi", state: nil, access_expire: "2027-02-09 15:01:42" },
+          { id: 6, name: "directaccess", state: "SCARequired" }
+        ]
+      }
+    )
 
     PowensItem::Importer.new(@powens_item, powens_provider: provider).import
 
     @powens_item.reload
     assert_equal "SCARequired", @powens_item.connection_state
+    assert_equal "directaccess", @powens_item.connection_state_source
+    assert_equal Date.new(2027, 2, 9), @powens_item.access_expires_at
     assert_predicate @powens_item, :requires_update?
   end
 
   test "clears the connection state when every connection is healthy" do
-    @powens_item.update!(connection_state: "SCARequired", status: "requires_update")
+    @powens_item.update!(
+      connection_state: "SCARequired",
+      connection_state_source: "directaccess",
+      status: "requires_update"
+    )
     provider = FakePowensProvider.new(connections: [ { id: 3, state: nil } ])
 
     PowensItem::Importer.new(@powens_item, powens_provider: provider).import
 
     @powens_item.reload
     assert_nil @powens_item.connection_state
+    assert_nil @powens_item.connection_state_source
     assert_predicate @powens_item, :good?
   end
 

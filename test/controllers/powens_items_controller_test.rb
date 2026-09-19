@@ -81,30 +81,24 @@ class PowensItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("powens_items.refresh.success"), flash[:notice]
   end
 
-  test "reauthorize redirects to the Powens webauth url" do
+  test "reauthorize opens the Powens webview scoped to the connector" do
     Provider::Powens.any_instance
       .expects(:get_connections)
-      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "SCARequired") ])
-    Provider::Powens.any_instance
-      .expects(:webauth_url)
-      .with(
-        connection_id: 3,
-        client_id: "client-123",
-        redirect_uri: "http://www.example.com/powens_items/callback",
-        state: @powens_item.id
-      )
-      .returns("https://webauth.powens.com/resume")
+      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "SCARequired", id_connector: 1) ])
+    Provider::Powens.any_instance.expects(:get_temporary_code).returns("temp-code-123")
 
     post reauthorize_powens_item_url(@powens_item)
 
     assert_response :see_other
-    assert_equal "https://webauth.powens.com/resume", @response.location
+    location = @response.location
+    assert_match "webview.powens.com/connect", location
+    assert_match "connector_ids=1", location
+    assert_match "code=temp-code-123", location
+    assert_match "state=#{@powens_item.id}", location
   end
 
-  test "reauthorize reports when no connection needs attention" do
-    Provider::Powens.any_instance
-      .expects(:get_connections)
-      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil) ])
+  test "reauthorize reports when the item has no connection" do
+    Provider::Powens.any_instance.expects(:get_connections).returns([])
 
     post reauthorize_powens_item_url(@powens_item)
 

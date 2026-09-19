@@ -182,28 +182,31 @@ class Provider::PowensTest < ActiveSupport::TestCase
     assert_equal "Bearer powens-token", requests.first[:headers]["Authorization"]
   end
 
-  test "builds a webauth url to resume a connection" do
+  test "lists the sources of a connection with their states and expiries" do
     requests = []
 
     Provider::Powens.stub(:get, ->(url, headers:, query: nil) {
       requests << { url: url, query: query }
-      FakeResponse.new(code: 200, message: "OK", body: { url: "https://webauth.powens.com/x" }.to_json)
+      FakeResponse.new(
+        code: 200,
+        message: "OK",
+        body: {
+          sources: [
+            { id: 5, name: "openapi", state: nil, access_expire: "2027-02-09 15:01:42" },
+            { id: 6, name: "directaccess", state: "SCARequired", access_expire: nil }
+          ]
+        }.to_json
+      )
     }) do
       client = Provider::Powens.new(domain: "my.biapi.pro", access_token: "powens-token")
-      url = client.webauth_url(
-        connection_id: 3,
-        client_id: "client-1",
-        redirect_uri: "http://localhost:3000/powens_items/callback",
-        state: "item-id"
-      )
+      sources = client.get_connection_sources(3)
 
-      assert_equal "https://webauth.powens.com/x", url
+      assert_equal %w[openapi directaccess], sources.map { |source| source[:name] }
+      assert_equal "SCARequired", sources.second[:state]
+      assert_nil sources.first[:state]
     end
 
-    assert_match %r{/webauth-url}, requests.first[:url]
-    assert_equal 3, requests.first[:query][:id_connection]
-    assert_equal "client-1", requests.first[:query][:client_id]
-    assert_equal "item-id", requests.first[:query][:state]
+    assert_match %r{/users/me/connections/3/sources}, requests.first[:url]
   end
 
   test "sends the resuming signal for a decoupled connection" do

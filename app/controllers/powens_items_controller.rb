@@ -149,8 +149,10 @@ class PowensItemsController < ApplicationController
     redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
   end
 
-  # Resume a connection that needs SCA / consent renewal: build the webauth URL
-  # and hand the browser to it.
+  # Re-open the Powens webview scoped to the connector that needs attention so
+  # the user re-accepts the bank connection and picks the accounts to share
+  # again (SCA, consent renewal, account selection). Powens handles that flow
+  # end to end; we only carry the code and the redirect back.
   def reauthorize
     unless @powens_item.credentials_configured?
       redirect_to settings_providers_path, alert: t(".no_credentials_configured"), status: :see_other
@@ -163,36 +165,28 @@ class PowensItemsController < ApplicationController
     end
 
     provider = @powens_item.powens_provider
-    connection = powens_connection_needing_attention(provider)
+    connections = provider.get_connections
+    connection = powens_connection_needing_attention(connections) || connections.first
 
     if connection.nil?
       redirect_to settings_providers_path, alert: t(".nothing_to_resume"), status: :see_other
       return
     end
 
-    url = provider.webauth_url(
-      connection_id: connection.with_indifferent_access[:id],
-      client_id: @powens_item.client_id,
-      redirect_uri: "#{request.base_url}#{powens_items_callback_path}",
-      state: @powens_item.id
-    )
+    code = provider.get_temporary_code
+    connector_ids = connection.with_indifferent_access[:id_connector]
 
-    redirect_to url, allow_other_host: true, status: :see_other
+    redirect_to powens_connect_webview_url(@powens_item, code, connector_ids: connector_ids), allow_other_host: true, status: :see_other
   rescue Provider::Powens::PowensError => e
     capture_provider_error("Failed to start the Powens re-authentication", e)
-
-    if e.error_type == :conflict
-      redirect_to settings_providers_path, notice: t(".already_up_to_date"), status: :see_other
-    else
-      redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
-    end
+    redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
   end
 
   # Signal Powens that the user approved a decoupled SCA in their bank app, then
   # pull the refreshed data.
   def resume
     provider = @powens_item.powens_provider
-    connection = powens_connection_needing_attention(provider)
+    connection = powens_connection_needing_attention(provider.get_connections)
 
     if connection.nil?
       redirect_to settings_providers_path, alert: t(".nothing_to_resume"), status: :see_other
@@ -412,8 +406,8 @@ class PowensItemsController < ApplicationController
 
     # First connection whose state requires user action, or nil when every
     # connection is healthy.
-    def powens_connection_needing_attention(provider)
-      provider.get_connections.find { |connection| connection.with_indifferent_access[:state].present? }
+    def powens_connection_needing_attention(connections)
+      connections.find { |connection| connection.with_indifferent_access[:state].present? }
     end
 
     # Record a provider error with structured metadata for support.
@@ -432,7 +426,7 @@ class PowensItemsController < ApplicationController
     # Build the Powens Connect webview URL: the temporary code ties the flow to
     # the item's Powens user, `state` carries the item id back to #callback.
     # The redirect_uri must be whitelisted in the Powens console.
-    def powens_connect_webview_url(powens_item, code)
+    def powens_connect_webview_url(powens_item, code, connector_ids: nil)
       query = {
         domain: powens_item.domain,
         client_id: powens_item.client_id,
@@ -440,6 +434,8 @@ class PowensItemsController < ApplicationController
         code: code,
         state: powens_item.id
       }
+      # Scopes the webview to one bank when re-authorizing an existing connection.
+      query[:connector_ids] = connector_ids if connector_ids.present?
 
       "https://webview.powens.com/connect?#{query.to_query}"
     end

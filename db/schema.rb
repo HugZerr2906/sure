@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -1778,9 +1778,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_000001) do
   end
 
   create_table "powens_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.date "access_expires_at"
     t.text "access_token"
     t.string "client_id"
     t.string "connection_state"
+    t.string "connection_state_source"
     t.datetime "created_at", null: false
     t.string "domain"
     t.uuid "family_id", null: false

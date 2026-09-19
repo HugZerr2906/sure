@@ -77,19 +77,12 @@ class Provider::Powens
     )
   end
 
-  # GET /webauth-url — URL to present to the user to add a connection or resume
-  # one that needs SCA / consent renewal. Raises PowensError(:conflict) when the
-  # connection is already up to date.
-  def webauth_url(connection_id:, client_id:, redirect_uri:, state: nil)
-    query = {
-      client_id: client_id,
-      redirect_uri: redirect_uri,
-      id_connection: connection_id
-    }
-    query[:state] = state if state.present?
-
-    payload = get("webauth-url", query: query)
-    payload[:url].presence
+  # GET /users/me/connections/{connectionId}/sources — per-source sync state.
+  # A connection aggregates several sources (openapi, directaccess, ...) and
+  # each one carries its own state and consent expiry.
+  def get_connection_sources(connection_id)
+    payload = get("users/me/connections/#{ERB::Util.url_encode(connection_id.to_s)}/sources")
+    Array(payload[:sources])
   end
 
   # POST /users/me/connections/{connectionId}?background=true { "resume": true }

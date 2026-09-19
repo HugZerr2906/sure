@@ -44,15 +44,54 @@ class PowensItem::Importer
   private
 
     # Record the connection state Powens reports (nil when the last sync
-    # succeeded) so settings can prompt a re-authentication when a connection is
-    # stuck in SCARequired / webauthRequired / ... Never fails the import.
+    # succeeded), the stalled source, and the earliest consent expiry, so
+    # settings can prompt a re-authorization before data goes stale. A
+    # connection aggregates sources (openapi, directaccess, ...) that fail
+    # independently. Never fails the import.
     def refresh_connection_state
       connections = powens_provider.get_connections
-      state = connections.filter_map { |connection| connection.with_indifferent_access[:state].presence }.first
+      stalled = connections.find { |connection| connection.with_indifferent_access[:state].present? }
+      state = stalled&.with_indifferent_access&.[](:state)
+      source_name, access_expires_at = connection_source_details(connections, stalled)
 
-      powens_item.update!(connection_state: state, status: state.present? ? "requires_update" : "good")
+      powens_item.update!(
+        connection_state: state,
+        connection_state_source: state.present? ? source_name : nil,
+        access_expires_at: access_expires_at,
+        status: state.present? ? "requires_update" : "good"
+      )
     rescue => e
       Rails.logger.warn "PowensItem::Importer - Could not read connection state: #{e.class} - #{e.message}"
+    end
+
+    # Name of the source reporting a state, plus the earliest access expiry
+    # across every source of the item's connections.
+    def connection_source_details(connections, stalled)
+      stalled_connection_id = stalled&.with_indifferent_access&.[](:id)
+      source_name = nil
+      expiries = []
+
+      connections.each do |connection|
+        connection_id = connection.with_indifferent_access[:id]
+        sources = powens_provider.get_connection_sources(connection_id).map(&:with_indifferent_access)
+
+        expiries.concat(sources.filter_map { |source| source[:access_expire].presence })
+        if connection_id == stalled_connection_id
+          source_name = sources.find { |source| source[:state].present? }&.[](:name)
+        end
+      end
+
+      [ source_name, earliest_date(expiries) ]
+    end
+
+    # Strictest (earliest) date in the list, or nil when none parses.
+    def earliest_date(values)
+      earliest = values.compact.min
+      return nil if earliest.blank?
+
+      Date.parse(earliest.to_s)
+    rescue ArgumentError
+      nil
     end
 
     # Fetch the current account list from Powens, returning a hash of +items+ or
