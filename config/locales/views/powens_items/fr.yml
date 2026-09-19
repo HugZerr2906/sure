@@ -47,7 +47,7 @@ fr:
       add_bank: Ajouter une banque
       reauthorize_bank: Réautoriser la banque
       force_sync: Forcer la synchro bancaire
-      force_sync_hint: Demande à votre banque une nouvelle validation (une notification peut arriver dans son application). Ne crée jamais de nouvelle connexion.
+      force_sync_hint: "Demande à Powens d'interroger votre banque maintenant. Powens limite ces demandes ; en cas de refus, la prochaine synchro automatique est indiquée. Ne crée jamais de nouvelle connexion."
       renew: Renouveler l'autorisation
       resume: J'ai validé, reprendre la synchro
       add_bank_hint: Crée une nouvelle connexion. Pour une banque déjà connectée, utilisez plutôt « Réautoriser la banque ».
@@ -94,6 +94,8 @@ fr:
       notSupported: source non supportée
     refresh:
       success: Rafraîchissement demandé. Powens interroge vos banques maintenant ; rechargez la page dans une minute puis relancez Sync.
+      limited: Powens refuse la synchro forcée pour l'instant — il limite la fréquence de ces demandes. Les données déjà disponibles chez Powens ont été récupérées.
+      limited_with_date: Powens refuse la synchro forcée pour l'instant — il limite la fréquence de ces demandes. Votre banque sera réinterrogée automatiquement le %{date}. Les données déjà disponibles ont été récupérées.
       no_connections: Aucune connexion Powens à rafraîchir.
       api_error: Impossible de demander le rafraîchissement bancaire.
     renew:

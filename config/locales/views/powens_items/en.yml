@@ -47,7 +47,7 @@ en:
       add_bank: Add a bank
       reauthorize_bank: Re-authorize the bank
       force_sync: Force a bank sync
-      force_sync_hint: Asks your bank for a fresh validation (a notification may arrive in its app). Never creates a new connection.
+      force_sync_hint: "Asks Powens to query your bank now. Powens rate-limits these requests; when declined, the next automatic sync is shown. Never creates a new connection."
       renew: Renew the authorization
       resume: I validated, resume the sync
       add_bank_hint: Creates a new connection. For a bank you already connected, use 'Re-authorize the bank' instead.
@@ -94,6 +94,8 @@ en:
       notSupported: unsupported source
     refresh:
       success: Bank refresh requested. Powens is syncing with your banks now; refresh the page in a minute and sync again.
+      limited: Powens declined the forced sync for now - it rate-limits these requests. The data already available at Powens was pulled.
+      limited_with_date: Powens declined the forced sync for now - it rate-limits these requests. Your bank will be queried again automatically on %{date}. The data already available was pulled.
       no_connections: No Powens connection to refresh.
       api_error: Could not request a bank refresh.
     renew:

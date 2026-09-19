@@ -129,6 +129,10 @@ class PowensItemsController < ApplicationController
 
   # Ask Powens to synchronize the item's connections with the banks again, then
   # pull the result. Existing accounts are updated, never duplicated.
+  #
+  # Powens rate-limits forced syncs (each connection is normally synced once a
+  # day) and answers 409 conflict when it declines, so that case gets a plain
+  # explanation with the next scheduled sync instead of a generic error.
   def refresh
     provider = @powens_item.powens_provider
     connections = provider.get_connections
@@ -138,15 +142,29 @@ class PowensItemsController < ApplicationController
       return
     end
 
+    refused = 0
+    failures = 0
+
     connections.each do |connection|
       provider.sync_connection(connection.with_indifferent_access[:id])
+    rescue Provider::Powens::PowensError => e
+      if e.error_type == :conflict
+        refused += 1
+      else
+        failures += 1
+        capture_provider_error("Failed to trigger a bank refresh", e)
+      end
     end
+
     @powens_item.sync_later
 
-    redirect_to settings_providers_path, notice: t(".success"), status: :see_other
-  rescue Provider::Powens::PowensError => e
-    capture_provider_error("Failed to trigger a bank refresh", e)
-    redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
+    if refused == connections.size
+      redirect_to settings_providers_path, notice: refusal_message(connections), status: :see_other
+    elsif failures.positive?
+      redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
+    else
+      redirect_to settings_providers_path, notice: t(".success"), status: :see_other
+    end
   end
 
   # Renew the PSD2 authorization before it expires (Powens consents last about
@@ -397,6 +415,19 @@ class PowensItemsController < ApplicationController
     # connection is healthy.
     def powens_connection_needing_attention(connections)
       connections.find { |connection| connection.with_indifferent_access[:state].present? }
+    end
+
+    # Powens declined the forced sync: explain why and when the bank will be
+    # queried again on its own.
+    def refusal_message(connections)
+      next_try = connections.filter_map { |connection| connection.with_indifferent_access[:next_try].presence }.min
+      scheduled_at = begin
+        next_try.present? ? Time.zone.parse(next_try.to_s) : nil
+      rescue ArgumentError
+        nil
+      end
+
+      scheduled_at ? t(".limited_with_date", date: l(scheduled_at, format: :long)) : t(".limited")
     end
 
     # Record a provider error with structured metadata for support.

@@ -81,6 +81,26 @@ class PowensItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("powens_items.refresh.success"), flash[:notice]
   end
 
+  test "refresh explains a declined forced sync and still pulls the data" do
+    Provider::Powens.any_instance
+      .expects(:get_connections)
+      .returns([
+        ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil, next_try: "2026-09-20 16:47:06")
+      ])
+    Provider::Powens.any_instance
+      .expects(:sync_connection)
+      .with(3)
+      .raises(Provider::Powens::PowensError.new("Powens conflict: conflict", :conflict))
+
+    assert_enqueued_with(job: SyncJob) do
+      post refresh_powens_item_url(@powens_item)
+    end
+
+    assert_redirected_to settings_providers_path
+    assert flash[:notice].present?, "expected an explanatory notice"
+    assert_nil flash[:alert]
+  end
+
   test "renew requests a fresh bank authorization and queues a Sure sync" do
     Provider::Powens.any_instance
       .expects(:get_connections)
