@@ -46,13 +46,12 @@ fr:
       client_id_help: Nécessaire pour ajouter une autre banque. Se trouve dans la console Powens, rubrique applications client. Utilisez le même client dont la liste des redirect URIs contient l'URL de callback de Sure.
       add_bank: Ajouter une banque
       refresh_from_bank: Forcer la synchro Powens
-      reauthorize: Ré-autoriser dans Powens
+      renew: Renouveler l'autorisation
       resume: J'ai validé, reprendre la synchro
       connection_attention_title: Cette connexion demande votre attention
-      connection_attention_message: "Powens signale : %{state}. Une partie des comptes n'est plus rafraîchie tant que ce n'est pas résolu. Cliquez sur « Ré-autoriser dans Powens » pour refaire la connexion et resélectionner vos comptes dans l'interface Powens."
-      connection_attention_decoupled: Votre banque demande une validation dans son application mobile. Validez la connexion dans l'appli Crédit Mutuel, puis cliquez sur le bouton ci-dessous.
+      connection_attention_message: "Powens signale : %{state}. Une partie des comptes n'est plus rafraîchie. Validez la demande dans l'application de votre banque, puis cliquez sur « J'ai validé, reprendre la synchro ». Si aucune demande ne vous est parvenue, cliquez d'abord sur « Forcer la synchro Powens »."
       access_expires_at: "Autorisation bancaire valable jusqu'au %{date}."
-      access_expires_soon: "Autorisation bancaire à renouveler avant le %{date} — utilisez « Ré-autoriser dans Powens »."
+      access_expires_soon: "Autorisation bancaire à renouveler avant le %{date} — utilisez « Renouveler l'autorisation »."
       sync_start_date_label: Date de début d'historique
       sync_start_date_help: Laissez vide pour importer tout l'historique disponible (varie selon la banque)
       setup_accounts: Configurer les comptes
@@ -94,12 +93,10 @@ fr:
       success: Rafraîchissement demandé. Powens interroge vos banques maintenant ; rechargez la page dans une minute puis relancez Sync.
       no_connections: Aucune connexion Powens à rafraîchir.
       api_error: Impossible de demander le rafraîchissement bancaire.
-    reauthorize:
-      no_credentials_configured: Configurez d'abord le domaine et le jeton Powens.
-      no_client_id: Renseignez d'abord l'ID client Powens de cette connexion.
-      nothing_to_resume: Aucune connexion à ré-authentifier pour l'instant.
-      already_up_to_date: Cette connexion est déjà à jour.
-      api_error: Impossible de démarrer la ré-authentification.
+    renew:
+      success: Renouvellement de l'autorisation demandé. Validez la demande envoyée par votre banque, puis relancez Sync.
+      no_connections: Aucune connexion Powens à renouveler.
+      api_error: Impossible de demander le renouvellement de l'autorisation.
     resume:
       success: Signal de reprise envoyé. Powens resynchronise ; rechargez la page dans une minute puis relancez Sync.
       nothing_to_resume: Aucune connexion à reprendre pour l'instant.

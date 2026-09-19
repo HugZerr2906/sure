@@ -1,10 +1,10 @@
 class PowensItemsController < ApplicationController
-  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank, :refresh, :reauthorize, :resume ]
+  before_action :set_powens_item, only: [ :show, :edit, :update, :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank, :refresh, :renew, :resume ]
   before_action :require_admin!, only: [
     :new, :create, :preload_accounts, :select_accounts, :link_accounts,
     :select_existing_account, :link_existing_account, :edit, :update,
     :destroy, :sync, :setup_accounts, :complete_account_setup, :connect_bank,
-    :refresh, :reauthorize, :resume
+    :refresh, :renew, :resume
   ]
 
   # List the family's active Powens connections in settings.
@@ -149,36 +149,25 @@ class PowensItemsController < ApplicationController
     redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
   end
 
-  # Re-open the Powens webview scoped to the connector that needs attention so
-  # the user re-accepts the bank connection and picks the accounts to share
-  # again (SCA, consent renewal, account selection). Powens handles that flow
-  # end to end; we only carry the code and the redirect back.
-  def reauthorize
-    unless @powens_item.credentials_configured?
-      redirect_to settings_providers_path, alert: t(".no_credentials_configured"), status: :see_other
-      return
-    end
-
-    if @powens_item.client_id.blank?
-      redirect_to settings_providers_path, alert: t(".no_client_id"), status: :see_other
-      return
-    end
-
+  # Renew the PSD2 authorization before it expires (Powens consents last about
+  # 180 days). This asks the bank for a fresh consent, which triggers an SCA.
+  def renew
     provider = @powens_item.powens_provider
     connections = provider.get_connections
-    connection = powens_connection_needing_attention(connections) || connections.first
 
-    if connection.nil?
-      redirect_to settings_providers_path, alert: t(".nothing_to_resume"), status: :see_other
+    if connections.empty?
+      redirect_to settings_providers_path, alert: t(".no_connections"), status: :see_other
       return
     end
 
-    code = provider.get_temporary_code
-    connector_ids = connection.with_indifferent_access[:id_connector]
+    connections.each do |connection|
+      provider.renew_authorization(connection.with_indifferent_access[:id])
+    end
+    @powens_item.sync_later
 
-    redirect_to powens_connect_webview_url(@powens_item, code, connector_ids: connector_ids), allow_other_host: true, status: :see_other
+    redirect_to settings_providers_path, notice: t(".success"), status: :see_other
   rescue Provider::Powens::PowensError => e
-    capture_provider_error("Failed to start the Powens re-authentication", e)
+    capture_provider_error("Failed to renew the Powens authorization", e)
     redirect_to settings_providers_path, alert: t(".api_error"), status: :see_other
   end
 

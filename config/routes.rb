@@ -912,7 +912,7 @@ Rails.application.routes.draw do
       post :complete_account_setup
       post :connect_bank
       post :refresh
-      post :reauthorize
+      post :renew
       post :resume
     end
   end

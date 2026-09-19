@@ -81,29 +81,27 @@ class PowensItemsControllerTest < ActionDispatch::IntegrationTest
     assert_equal I18n.t("powens_items.refresh.success"), flash[:notice]
   end
 
-  test "reauthorize opens the Powens webview scoped to the connector" do
+  test "renew requests a fresh bank authorization and queues a Sure sync" do
     Provider::Powens.any_instance
       .expects(:get_connections)
-      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: "SCARequired", id_connector: 1) ])
-    Provider::Powens.any_instance.expects(:get_temporary_code).returns("temp-code-123")
+      .returns([ ActiveSupport::HashWithIndifferentAccess.new(id: 3, state: nil) ])
+    Provider::Powens.any_instance.expects(:renew_authorization).with(3)
 
-    post reauthorize_powens_item_url(@powens_item)
-
-    assert_response :see_other
-    location = @response.location
-    assert_match "webview.powens.com/connect", location
-    assert_match "connector_ids=1", location
-    assert_match "code=temp-code-123", location
-    assert_match "state=#{@powens_item.id}", location
-  end
-
-  test "reauthorize reports when the item has no connection" do
-    Provider::Powens.any_instance.expects(:get_connections).returns([])
-
-    post reauthorize_powens_item_url(@powens_item)
+    assert_enqueued_with(job: SyncJob) do
+      post renew_powens_item_url(@powens_item)
+    end
 
     assert_redirected_to settings_providers_path
-    assert_equal I18n.t("powens_items.reauthorize.nothing_to_resume"), flash[:alert]
+    assert_equal I18n.t("powens_items.renew.success"), flash[:notice]
+  end
+
+  test "renew reports when the item has no Powens connection" do
+    Provider::Powens.any_instance.expects(:get_connections).returns([])
+
+    post renew_powens_item_url(@powens_item)
+
+    assert_redirected_to settings_providers_path
+    assert_equal I18n.t("powens_items.renew.no_connections"), flash[:alert]
   end
 
   test "resume signals Powens and queues a Sure sync" do

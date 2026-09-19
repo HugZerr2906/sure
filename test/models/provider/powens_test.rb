@@ -225,4 +225,21 @@ class Provider::PowensTest < ActiveSupport::TestCase
     assert_equal true, requests.first[:query][:background]
     assert_equal({ "resume" => true }, JSON.parse(requests.first[:body]))
   end
+
+  test "requests a fresh bank authorization for a connection" do
+    requests = []
+
+    Provider::Powens.stub(:post, ->(url, headers:, query: nil, body: nil) {
+      requests << { url: url, query: query, body: body }
+      FakeResponse.new(code: 200, message: "OK", body: { id: 3, state: "validating" }.to_json)
+    }) do
+      client = Provider::Powens.new(domain: "my.biapi.pro", access_token: "powens-token")
+      client.renew_authorization(3)
+    end
+
+    assert_equal 1, requests.size
+    assert_match %r{/users/me/connections/3}, requests.first[:url]
+    assert_equal true, requests.first[:query][:background]
+    assert_equal({ "refresh_auth" => true }, JSON.parse(requests.first[:body]))
+  end
 end

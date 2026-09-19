@@ -38,11 +38,7 @@
               <%= render DS::Alert.new(
                     variant: :warning,
                     title: t("powens_items.provider_panel.connection_attention_title"),
-                    message: if item.connection_state == "decoupled"
-                               t("powens_items.provider_panel.connection_attention_decoupled")
-                             else
-                               t("powens_items.provider_panel.connection_attention_message", state: state_label)
-                             end
+                    message: t("powens_items.provider_panel.connection_attention_message", state: state_label)
                   ) %>
             <% end %>
 
@@ -76,7 +72,7 @@
                 data: { turbo: false },
                 form: { data: { turbo: false } }
               ) %>
-              <% if item.connection_state == "decoupled" %>
+              <% if item.connection_state.present? %>
                 <%= render DS::Button.new(
                   text: t("powens_items.provider_panel.resume"),
                   icon: "check",
@@ -87,13 +83,14 @@
                   data: { turbo: false },
                   form: { data: { turbo: false } }
                 ) %>
-              <% elsif item.connection_state.present? && item.client_id.present? %>
+              <% end %>
+              <% if item.access_expires_at.present? && item.access_expires_at <= 30.days.from_now.to_date %>
                 <%= render DS::Button.new(
-                  text: t("powens_items.provider_panel.reauthorize"),
+                  text: t("powens_items.provider_panel.renew"),
                   icon: "shield-check",
-                  variant: :primary,
+                  variant: :outline,
                   size: :sm,
-                  href: reauthorize_powens_item_path(item),
+                  href: renew_powens_item_path(item),
                   method: :post,
                   data: { turbo: false },
                   form: { data: { turbo: false } }

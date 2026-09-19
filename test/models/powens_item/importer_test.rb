@@ -185,6 +185,41 @@ class PowensItem::ImporterTest < ActiveSupport::TestCase
     assert_predicate @powens_item, :good?
   end
 
+  test "ignores a rediscovered account that matches an already linked one" do
+    @powens_account.update!(
+      raw_payload: { iban: "FR7610278073910002044950385", number: "0739100020449503" }
+    )
+
+    provider = FakePowensProvider.new(
+      accounts: [
+        {
+          id: 123,
+          name: "Compte courant",
+          original_name: "Compte courant",
+          balance: 10,
+          currency: { iso_code: "EUR" },
+          type: "checking"
+        },
+        {
+          id: 900,
+          name: "Compte courant",
+          original_name: "Compte courant",
+          balance: 10,
+          currency: { iso_code: "EUR" },
+          type: "checking",
+          iban: "FR7610278073910002044950385"
+        }
+      ],
+      transactions: []
+    )
+
+    PowensItem::Importer.new(@powens_item, powens_provider: provider).import
+
+    duplicate = @powens_item.powens_accounts.find_by(account_id: "900")
+    assert duplicate.present?
+    assert_predicate duplicate, :ignored?
+  end
+
   private
 
     def import_with(transactions:)

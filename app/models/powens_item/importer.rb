@@ -122,6 +122,9 @@ class PowensItem::Importer
       accounts = Array(accounts_data[:items])
       linked_account_ids = powens_item.powens_accounts.joins(:account_provider).pluck(:account_id).map(&:to_s)
       all_existing_ids = powens_item.powens_accounts.pluck(:account_id).map(&:to_s)
+      linked_identities = powens_item.powens_accounts
+                                      .joins(:account_provider)
+                                      .filter_map { |account| account_identity(account.raw_payload) }
 
       accounts.each do |account_data|
         account = account_data.with_indifferent_access
@@ -137,6 +140,14 @@ class PowensItem::Importer
         elsif !all_existing_ids.include?(account_id.to_s)
           powens_account = powens_item.powens_accounts.build(account_id: account_id.to_s)
           powens_account.upsert_powens_snapshot!(account)
+          # Re-authorizing a bank at Powens creates a second connection that
+          # returns the same bank accounts under new ids. Keep those out of
+          # setup so the user never links one bank account twice; the linked
+          # original keeps feeding the Sure account.
+          if linked_identities.include?(account_identity(account))
+            powens_account.update!(ignored: true)
+            Rails.logger.info "PowensItem::Importer - Ignoring duplicate discovery of account #{account_id} (already linked)"
+          end
           stats[:created] += 1
         end
       rescue => e
@@ -240,6 +251,16 @@ class PowensItem::Importer
     def transaction_id(transaction)
       data = transaction.with_indifferent_access
       data[:id].presence
+    end
+
+    # Bank-side identity of an account: IBAN when the connector exposes it,
+    # otherwise the bank account number. Two Powens connections to the same
+    # bank return the same identity for the same underlying account.
+    def account_identity(snapshot)
+      return nil if snapshot.blank?
+
+      data = snapshot.with_indifferent_access
+      data[:iban].presence || data[:number].presence
     end
 
     # Resolve the date from which to fetch transactions for +powens_account+,

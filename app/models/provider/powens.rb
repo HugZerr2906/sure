@@ -97,6 +97,17 @@ class Provider::Powens
     )
   end
 
+  # POST /users/me/connections/{connectionId}?background=true
+  # { "refresh_auth": true } — renews the PSD2 authorization before it expires
+  # (Powens consents last about 180 days). Triggers an SCA.
+  def renew_authorization(connection_id)
+    post(
+      "users/me/connections/#{ERB::Util.url_encode(connection_id.to_s)}",
+      query: { background: true },
+      body: { refresh_auth: true }.to_json
+    )
+  end
+
   private
 
     RETRYABLE_ERRORS = [
