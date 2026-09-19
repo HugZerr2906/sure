@@ -53,14 +53,19 @@
                 disabled: item.syncing?
               ) %>
               <%= render DS::Button.new(
-                text: t("powens_items.provider_panel.refresh_from_bank"),
+                text: if item.connection_state.present?
+                        t("powens_items.provider_panel.reauthorize_bank")
+                      else
+                        t("powens_items.provider_panel.force_sync")
+                      end,
                 icon: "landmark",
                 variant: :outline,
                 size: :sm,
                 href: refresh_powens_item_path(item),
                 method: :post,
                 data: { turbo: false },
-                form: { data: { turbo: false } }
+                form: { data: { turbo: false } },
+                title: t("powens_items.provider_panel.force_sync_hint")
               ) %>
               <%= render DS::Button.new(
                 text: t("powens_items.provider_panel.add_bank"),
@@ -70,7 +75,8 @@
                 href: connect_bank_powens_item_path(item),
                 method: :post,
                 data: { turbo: false },
-                form: { data: { turbo: false } }
+                form: { data: { turbo: false } },
+                title: t("powens_items.provider_panel.add_bank_hint")
               ) %>
               <% if item.connection_state.present? %>
                 <%= render DS::Button.new(

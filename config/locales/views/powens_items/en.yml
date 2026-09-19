@@ -45,11 +45,14 @@ en:
       client_id_placeholder: Your Powens client application ID
       client_id_help: Needed to add another bank. Find it in the Powens console, under client applications. Use the same client whose redirect URIs list this Sure callback URL.
       add_bank: Add a bank
-      refresh_from_bank: Force Powens sync
+      reauthorize_bank: Re-authorize the bank
+      force_sync: Force a bank sync
+      force_sync_hint: Asks your bank for a fresh validation (a notification may arrive in its app). Never creates a new connection.
       renew: Renew the authorization
       resume: I validated, resume the sync
+      add_bank_hint: Creates a new connection. For a bank you already connected, use 'Re-authorize the bank' instead.
       connection_attention_title: This connection needs your attention
-      connection_attention_message: "Powens reports %{state}. Part of the accounts are no longer refreshed. Approve the request in your bank app, then press 'I validated, resume the sync'. If no request reached you, press 'Force Powens sync' first."
+      connection_attention_message: "Powens reports %{state}. Part of the accounts are no longer refreshed. Press 'Re-authorize the bank', approve the request in your bank app, then press 'I validated, resume the sync'."
       access_expires_at: "Bank authorization valid until %{date}."
       access_expires_soon: "Bank authorization must be renewed before %{date} - use 'Renew the authorization'."
       sync_start_date_label: History start date

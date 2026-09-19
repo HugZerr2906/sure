@@ -45,11 +45,14 @@ fr:
       client_id_placeholder: L'ID de votre application client Powens
       client_id_help: Nécessaire pour ajouter une autre banque. Se trouve dans la console Powens, rubrique applications client. Utilisez le même client dont la liste des redirect URIs contient l'URL de callback de Sure.
       add_bank: Ajouter une banque
-      refresh_from_bank: Forcer la synchro Powens
+      reauthorize_bank: Réautoriser la banque
+      force_sync: Forcer la synchro bancaire
+      force_sync_hint: Demande à votre banque une nouvelle validation (une notification peut arriver dans son application). Ne crée jamais de nouvelle connexion.
       renew: Renouveler l'autorisation
       resume: J'ai validé, reprendre la synchro
+      add_bank_hint: Crée une nouvelle connexion. Pour une banque déjà connectée, utilisez plutôt « Réautoriser la banque ».
       connection_attention_title: Cette connexion demande votre attention
-      connection_attention_message: "Powens signale : %{state}. Une partie des comptes n'est plus rafraîchie. Validez la demande dans l'application de votre banque, puis cliquez sur « J'ai validé, reprendre la synchro ». Si aucune demande ne vous est parvenue, cliquez d'abord sur « Forcer la synchro Powens »."
+      connection_attention_message: "Powens signale : %{state}. Une partie des comptes n'est plus rafraîchie. Cliquez sur « Réautoriser la banque », validez la demande dans l'application de votre banque, puis cliquez sur « J'ai validé, reprendre la synchro »."
       access_expires_at: "Autorisation bancaire valable jusqu'au %{date}."
       access_expires_soon: "Autorisation bancaire à renouveler avant le %{date} — utilisez « Renouveler l'autorisation »."
       sync_start_date_label: Date de début d'historique
